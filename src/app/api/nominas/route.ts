@@ -1,9 +1,11 @@
 import * as XLSX from "xlsx";
 import { fail, ok } from "@/lib/api";
+import { requireSession } from "@/lib/auth/server-session";
 import { buildNomina } from "@/services/operations-service";
 
 export async function GET(request: Request) {
   try {
+    await requireSession();
     const { searchParams } = new URL(request.url);
     const operationId = searchParams.get("operationId");
     if (!operationId) throw new Error("operationId requerido");

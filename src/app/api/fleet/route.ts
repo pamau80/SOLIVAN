@@ -1,4 +1,5 @@
 import { fail, ok } from "@/lib/api";
+import { requireSession } from "@/lib/auth/server-session";
 import {
   listFleet,
   upsertProvider,
@@ -7,14 +8,16 @@ import {
 
 export async function GET() {
   try {
+    await requireSession();
     return ok(listFleet());
   } catch (error) {
-    return fail(error, 500);
+    return fail(error, 401);
   }
 }
 
 export async function POST(request: Request) {
   try {
+    await requireSession();
     const body = await request.json();
     if (body?.entity === "provider") {
       return ok({ provider: upsertProvider(body) });

@@ -52,7 +52,9 @@ export type LocalDatabase = {
   session: { userId: string; role: (typeof AppRole)[keyof typeof AppRole] };
 };
 
-const DATA_DIR = path.join(process.cwd(), ".data");
+// Fuera de la raíz del proyecto para no disparar HMR de Next al persistir.
+const DATA_DIR =
+  process.env.SOLIVAN_DATA_DIR ?? path.join("/tmp", "solivan-data");
 const DATA_FILE =
   process.env.SOLIVAN_DATA_FILE ?? path.join(DATA_DIR, "solivan-local.json");
 
@@ -207,13 +209,38 @@ function seed(): LocalDatabase {
     },
   ];
 
-  const profile: Profile = {
-    id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1",
-    email: "planificador@solivan.local",
-    fullName: "Planificador Demo",
-    role: AppRole.Planner,
-    isActive: true,
-  };
+  const profiles: Profile[] = [
+    {
+      id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1",
+      email: "planificador@solivan.local",
+      fullName: "Planificador Demo",
+      role: AppRole.Planner,
+      isActive: true,
+    },
+    {
+      id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2",
+      email: "admin@solivan.local",
+      fullName: "Administrador Demo",
+      role: AppRole.Admin,
+      isActive: true,
+    },
+    {
+      id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3",
+      email: "operador@solivan.local",
+      fullName: "Operador Demo",
+      role: AppRole.Operator,
+      isActive: true,
+    },
+    {
+      id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa4",
+      email: "visor@solivan.local",
+      fullName: "Visor Demo",
+      role: AppRole.Viewer,
+      isActive: true,
+    },
+  ];
+
+  const profile = profiles[0];
 
   return {
     communes: [commune],
@@ -250,7 +277,7 @@ function seed(): LocalDatabase {
     tripAssignments: [],
     exceptions: [],
     incidents: [],
-    profiles: [profile],
+    profiles,
     auditLog: [],
     session: { userId: profile.id, role: profile.role },
   };

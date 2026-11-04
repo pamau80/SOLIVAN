@@ -1,4 +1,5 @@
 import { fail, ok } from "@/lib/api";
+import { requireSession } from "@/lib/auth/server-session";
 import { getDb } from "@/services/local/db";
 import {
   confirmOperation,
@@ -11,6 +12,7 @@ import {
 
 export async function GET(request: Request) {
   try {
+    await requireSession();
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
     if (id) {
@@ -26,12 +28,13 @@ export async function GET(request: Request) {
       providers: db.providers,
     });
   } catch (error) {
-    return fail(error, 500);
+    return fail(error, 401);
   }
 }
 
 export async function POST(request: Request) {
   try {
+    await requireSession();
     const body = await request.json();
     switch (body?.action) {
       case "plan":

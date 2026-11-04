@@ -1,4 +1,5 @@
 import { fail, ok } from "@/lib/api";
+import { requireSession } from "@/lib/auth/server-session";
 import {
   listPersons,
   setHabitualAssignment,
@@ -8,6 +9,7 @@ import { getDb } from "@/services/local/db";
 
 export async function GET() {
   try {
+    await requireSession();
     const db = getDb();
     return ok({
       persons: listPersons(),
@@ -18,12 +20,13 @@ export async function GET() {
       sectors: db.sectors,
     });
   } catch (error) {
-    return fail(error, 500);
+    return fail(error, 401);
   }
 }
 
 export async function POST(request: Request) {
   try {
+    await requireSession();
     const body = await request.json();
     if (body?.action === "setHabitual") {
       const assignment = setHabitualAssignment(body);

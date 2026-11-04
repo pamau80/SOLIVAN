@@ -97,6 +97,10 @@ Si faltan `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY`, la app a
 
 ---
 
-## Próxima fase recomendada
+## Estado actual
 
-**FASE 2 — Gestión de personas y asignaciones habituales**, una vez aplicadas las migraciones en un proyecto Supabase configurado.
+Fases 1–10 operativas en modo local con autenticación, APIs protegidas y ciclo completo.
+
+## Próximo paso recomendado
+
+Conectar proyecto Supabase real (`docs/SUPABASE_SETUP.md`), migrar datos demo y endurecer auth (MFA, recuperación de clave, service role solo en server).

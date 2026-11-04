@@ -22,7 +22,18 @@ npm run dev
 
 Sin variables de Supabase, la aplicación arranca en **modo local** con datos demo persistidos en `.data/`.
 
-Abre `http://localhost:3000`.
+Abre `http://localhost:3000/login`.
+
+Usuarios demo (modo local):
+
+| Rol | Correo | Clave |
+|-----|--------|-------|
+| planner | `planificador@solivan.local` | `solivan-demo` |
+| admin | `admin@solivan.local` | `solivan-admin` |
+| operator | `operador@solivan.local` | `solivan-oper` |
+| viewer | `visor@solivan.local` | `solivan-view` |
+
+Producción Supabase: ver `docs/SUPABASE_SETUP.md`.
 
 ## Módulos disponibles
 

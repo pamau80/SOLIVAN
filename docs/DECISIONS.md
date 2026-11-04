@@ -36,3 +36,8 @@
 
 - **Decisión:** Import/export CSV/XLSX; el motor y la persistencia son independientes de planillas.
 - **Motivo:** Cumplir el principio de autonomía respecto de Excel.
+
+## ADR-008 — Autenticación dual local/Supabase
+
+- **Decisión:** Cookie firmada HMAC (`solivan_session`) + middleware; login local demo o `signInWithPassword` si hay env Supabase.
+- **Motivo:** No bloquear operación sin secrets, manteniendo camino de producción con Auth/RLS.

@@ -1,11 +1,14 @@
 import { Sidebar } from "./Sidebar";
+import { SessionBar } from "./SessionBar";
 
 export function AppShell({
   children,
   modeLabel,
+  userLabel,
 }: {
   children: React.ReactNode;
   modeLabel: string;
+  userLabel: string;
 }) {
   return (
     <div className="flex min-h-screen bg-[#f4f6f8] text-slate-900">
@@ -15,9 +18,7 @@ export function AppShell({
           <p className="text-sm text-slate-600">
             Operación estandarizada de transporte de personas
           </p>
-          <span className="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-700">
-            {modeLabel}
-          </span>
+          <SessionBar modeLabel={modeLabel} userLabel={userLabel} />
         </header>
         <main className="flex-1 px-6 py-6">{children}</main>
       </div>
