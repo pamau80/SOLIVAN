@@ -41,5 +41,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# local runtime database (modo demo)
+# local runtime database (modo demo; runtime usa /tmp/solivan-data)
 .data/
+tmp-ui-auth.mjs
+AGENTS.md
