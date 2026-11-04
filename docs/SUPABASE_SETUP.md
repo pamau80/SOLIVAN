@@ -46,3 +46,5 @@ curl -s http://localhost:3000/api/health
 - Sin estas variables, SOLIVAN opera en **modo local** con usuarios demo (ver pantalla `/login`).
 - Las políticas RLS usan `public.has_role(...)` sobre `profiles`.
 - Domicilios/teléfonos permanecen restringidos a roles operativos.
+- La fachada `src/services/catalog-facade.ts` enruta lecturas y escrituras de catálogo (personas, habituales, flota, geografía, direcciones) a local o Supabase según `runtimeMode`.
+- El reinicio demo en `/admin` solo aplica en modo local.

@@ -50,7 +50,7 @@ Dos operadores con los mismos datos y parámetros deben obtener el mismo resulta
 | I | Control de ejecución | Estados + incidencias |
 | J | Historial | Snapshots + excepciones + audit |
 | K | Reportería | Dashboard + `/reportes` historial |
-| L | Administración | Roles sesión + reset demo |
+| L | Administración | Roles sesión + reset demo + export auditoría |
 
 ### Capas de código
 

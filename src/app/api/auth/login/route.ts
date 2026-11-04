@@ -27,10 +27,10 @@ export async function POST(request: Request) {
         throw new Error(error?.message || "Credenciales inválidas");
       }
 
-      const { resolveProfileRole } = await import(
+      const { getProfileRoleFacade } = await import(
         "@/services/catalog-facade"
       );
-      const profileRole = await resolveProfileRole(data.user.id);
+      const profileRole = await getProfileRoleFacade(data.user.id);
       const role =
         profileRole === "admin" ||
         profileRole === "planner" ||

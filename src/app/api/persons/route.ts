@@ -1,51 +1,35 @@
 import { fail, ok } from "@/lib/api";
 import { requireSession } from "@/lib/auth/server-session";
 import {
-  linkPersonAddress,
-  setHabitualAssignment,
-  upsertPerson,
-} from "@/services/catalog-service";
-import {
+  linkPersonAddressFacade,
   listFleetFacade,
+  listGeographyFacade,
   listHabitualFacade,
   listPersonsFacade,
-  listZonesFacade,
+  setHabitualFacade,
+  upsertPersonFacade,
 } from "@/services/catalog-facade";
-import { getDb } from "@/services/local/db";
 import { getAppEnv } from "@/lib/env";
 
 export async function GET() {
   try {
     await requireSession();
     const env = getAppEnv();
-    const [persons, habitualAssignments, fleet, zones] = await Promise.all([
+    const [persons, habitualAssignments, fleet, geography] = await Promise.all([
       listPersonsFacade(),
       listHabitualFacade(),
       listFleetFacade(),
-      listZonesFacade(),
+      listGeographyFacade(),
     ]);
-
-    const localExtras =
-      env.runtimeMode === "local"
-        ? {
-            providers: fleet.providers,
-            vehicles: fleet.vehicles,
-            zones,
-            sectors: getDb().sectors,
-            addresses: getDb().addresses,
-          }
-        : {
-            providers: fleet.providers,
-            vehicles: fleet.vehicles,
-            zones,
-            sectors: [],
-            addresses: [],
-          };
 
     return ok({
       persons,
       habitualAssignments,
-      ...localExtras,
+      providers: fleet.providers,
+      vehicles: fleet.vehicles,
+      zones: geography.zones,
+      sectors: geography.sectors,
+      addresses: geography.addresses,
       runtimeMode: env.runtimeMode,
     });
   } catch (error) {
@@ -58,14 +42,17 @@ export async function POST(request: Request) {
     await requireSession();
     const body = await request.json();
     if (body?.action === "setHabitual") {
-      const assignment = setHabitualAssignment(body);
+      const assignment = await setHabitualFacade(body);
       return ok({ assignment });
     }
     if (body?.action === "linkAddress") {
-      const person = linkPersonAddress(body.personId, body.addressId ?? null);
+      const person = await linkPersonAddressFacade(
+        body.personId,
+        body.addressId ?? null,
+      );
       return ok({ person });
     }
-    const person = upsertPerson(body);
+    const person = await upsertPersonFacade(body);
     return ok({ person });
   } catch (error) {
     return fail(error);

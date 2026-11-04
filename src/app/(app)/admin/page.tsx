@@ -7,7 +7,7 @@ import { Alert } from "@/components/ui/Alert";
 import { apiFetch } from "@/lib/client-api";
 
 type Payload = {
-  session: { userId: string; role: string };
+  session: { userId: string; role: string; mode?: string };
   profiles: Array<{ id: string; fullName: string; email: string; role: string }>;
   auditLog: Array<{
     id: string;
@@ -16,6 +16,8 @@ type Payload = {
     createdAt: string;
   }>;
   shifts: Array<{ code: string; name: string; startTime: string; endTime: string }>;
+  runtimeMode: "local" | "supabase";
+  supabaseConfigured: boolean;
 };
 
 const ROLES = ["admin", "planner", "operator", "viewer"] as const;
@@ -61,6 +63,29 @@ export default function AdminPage() {
     }
   }
 
+  async function exportAudit() {
+    setError(null);
+    try {
+      const result = await apiFetch<{ csv: string; count: number }>(
+        "/api/admin",
+        {
+          method: "POST",
+          body: JSON.stringify({ action: "exportAudit" }),
+        },
+      );
+      const blob = new Blob([result.csv], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `solivan-auditoria-${new Date().toISOString().slice(0, 10)}.csv`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+      setMessage(`Auditoría exportada (${result.count} filas)`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error");
+    }
+  }
+
   if (!data && !error) {
     return <p className="text-sm text-slate-600">Cargando administración…</p>;
   }
@@ -69,10 +94,21 @@ export default function AdminPage() {
     <div>
       <PageHeader
         title="Administración"
-        description="Roles de sesión (base FASE 10), turnos y auditoría. RLS completa queda para Supabase en producción."
+        description="Roles de sesión, runtime, turnos y auditoría."
       />
       {error ? <div className="mb-4"><Alert tone="error">{error}</Alert></div> : null}
       {message ? <div className="mb-4"><Alert tone="success">{message}</Alert></div> : null}
+
+      <div className="mb-4 rounded-lg border bg-white p-4 text-sm">
+        <h3 className="font-semibold">Runtime</h3>
+        <p className="mt-2 text-slate-700">
+          Modo: <strong>{data?.runtimeMode ?? "—"}</strong>
+          {data?.supabaseConfigured ? " · Supabase configurado" : " · variables Supabase ausentes"}
+        </p>
+        <p className="mt-1 text-xs text-slate-500">
+          En modo supabase, lecturas/escrituras de catálogo van a Postgres vía fachada.
+        </p>
+      </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <section className="rounded-lg border bg-white p-4">
@@ -95,9 +131,12 @@ export default function AdminPage() {
           <p className="mt-3 text-xs text-slate-500">
             El rol viewer bloquea escrituras en API local.
           </p>
-          <div className="mt-4">
+          <div className="mt-4 flex flex-wrap gap-2">
             <Button type="button" variant="danger" onClick={() => void resetDemo()}>
               Reiniciar datos demo
+            </Button>
+            <Button type="button" variant="secondary" onClick={() => void exportAudit()}>
+              Exportar auditoría CSV
             </Button>
           </div>
         </section>

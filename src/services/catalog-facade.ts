@@ -1,51 +1,140 @@
 import { getAppEnv } from "@/lib/env";
+import * as local from "@/services/catalog-service";
+import * as supabase from "@/services/repository/supabase-catalog";
 import type {
+  Address,
+  Commune,
   HabitualAssignment,
   Person,
   Provider,
+  Sector,
   Vehicle,
   Zone,
 } from "@/domain/types";
-import * as local from "@/services/catalog-service";
-import { getDb } from "@/services/local/db";
-import * as supabase from "@/services/repository/supabase-catalog";
+
+function isSupabase() {
+  return getAppEnv().runtimeMode === "supabase";
+}
 
 export async function listPersonsFacade(): Promise<Person[]> {
-  if (getAppEnv().runtimeMode === "supabase") {
-    return supabase.supabaseListPersons();
-  }
+  if (isSupabase()) return supabase.supabaseListPersons();
   return local.listPersons();
 }
 
 export async function listHabitualFacade(): Promise<HabitualAssignment[]> {
-  if (getAppEnv().runtimeMode === "supabase") {
-    return supabase.supabaseListHabitual();
-  }
-  return getDb().habitualAssignments.filter((h) => h.isCurrent);
+  if (isSupabase()) return supabase.supabaseListHabitual();
+  return local.listHabitualAssignments();
 }
 
 export async function listFleetFacade(): Promise<{
   providers: Provider[];
   vehicles: Vehicle[];
 }> {
-  if (getAppEnv().runtimeMode === "supabase") {
-    return supabase.supabaseListFleet();
-  }
+  if (isSupabase()) return supabase.supabaseListFleet();
   return local.listFleet();
 }
 
 export async function listZonesFacade(): Promise<Zone[]> {
-  if (getAppEnv().runtimeMode === "supabase") {
-    return supabase.supabaseListZones();
-  }
+  if (isSupabase()) return supabase.supabaseListZones();
   return local.listGeography().zones;
 }
 
-export async function resolveProfileRole(
+export async function listGeographyFacade() {
+  if (isSupabase()) return supabase.supabaseListGeography();
+  return local.listGeography();
+}
+
+export async function getProfileRoleFacade(
   userId: string,
 ): Promise<string | null> {
-  if (getAppEnv().runtimeMode === "supabase") {
-    return supabase.supabaseGetProfileRole(userId);
-  }
+  if (isSupabase()) return supabase.supabaseGetProfileRole(userId);
   return null;
+}
+
+export async function upsertPersonFacade(input: unknown): Promise<Person> {
+  if (isSupabase()) return supabase.supabaseUpsertPerson(input);
+  return local.upsertPerson(input);
+}
+
+export async function setHabitualFacade(input: {
+  personId: string;
+  providerId?: string | null;
+  vehicleId?: string | null;
+  zoneId?: string | null;
+  sectorId?: string | null;
+  shiftCode?: string | null;
+  pickupNotes?: string | null;
+}): Promise<HabitualAssignment> {
+  if (isSupabase()) return supabase.supabaseSetHabitual(input);
+  return local.setHabitualAssignment(input);
+}
+
+export async function linkPersonAddressFacade(
+  personId: string,
+  addressId: string | null,
+): Promise<Person> {
+  if (isSupabase()) {
+    return supabase.supabaseLinkPersonAddress(personId, addressId);
+  }
+  return local.linkPersonAddress(personId, addressId);
+}
+
+export async function upsertProviderFacade(input: {
+  code: string;
+  name: string;
+}): Promise<Provider> {
+  if (isSupabase()) return supabase.supabaseUpsertProvider(input);
+  return local.upsertProvider(input);
+}
+
+export async function upsertVehicleFacade(input: {
+  id?: string;
+  providerId: string;
+  plate: string;
+  label?: string | null;
+  authorizedCapacity: number;
+  status?: Vehicle["status"];
+}): Promise<Vehicle> {
+  if (isSupabase()) return supabase.supabaseUpsertVehicle(input);
+  return local.upsertVehicle(input);
+}
+
+export async function upsertZoneFacade(input: {
+  id?: string;
+  code: string;
+  name: string;
+}): Promise<Zone> {
+  if (isSupabase()) return supabase.supabaseUpsertZone(input);
+  return local.upsertZone(input);
+}
+
+export async function upsertCommuneFacade(input: {
+  code?: string | null;
+  name: string;
+  region?: string | null;
+}): Promise<Commune> {
+  if (isSupabase()) return supabase.supabaseUpsertCommune(input);
+  return local.upsertCommune(input);
+}
+
+export async function upsertSectorFacade(input: {
+  zoneId: string;
+  communeId?: string | null;
+  code: string;
+  name: string;
+}): Promise<Sector> {
+  if (isSupabase()) return supabase.supabaseUpsertSector(input);
+  return local.upsertSector(input);
+}
+
+export async function upsertAddressFacade(input: {
+  id?: string;
+  streetLine: string;
+  reference?: string | null;
+  communeId?: string | null;
+  sectorId?: string | null;
+  zoneId?: string | null;
+}): Promise<Address> {
+  if (isSupabase()) return supabase.supabaseUpsertAddress(input);
+  return local.upsertAddress(input);
 }

@@ -22,6 +22,10 @@ export function listPersons() {
   return getDb().persons.filter((p) => p.isActive);
 }
 
+export function listHabitualAssignments() {
+  return getDb().habitualAssignments.filter((h) => h.isCurrent);
+}
+
 export function upsertPerson(input: unknown): Person {
   assertCanWrite();
   const parsed = personDraftSchema.parse(input);
