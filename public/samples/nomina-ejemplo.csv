@@ -1,0 +1,5 @@
+id_externo,nombre,rut,usa_transporte
+TRB-1001,Ana Pérez,12.345.678-9,si
+TRB-1002,Bruno Soto,11.222.333-4,si
+TRB-2001,Diego Rojas,15.111.222-3,si
+TRB-1003,Carla Díaz,,no

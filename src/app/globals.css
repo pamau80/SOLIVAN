@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #f4f6f8;
+  --foreground: #0f172a;
+  --brand-navy: #0f2744;
+  --brand-accent: #0284c7;
+  --surface: #ffffff;
+  --border: #e2e8f0;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: var(--font-plex-sans), "Segoe UI", sans-serif;
+}
+
+code,
+.font-mono {
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+}
+
+@media print {
+  body {
+    background: #fff;
+  }
+
+  .print\:hidden,
+  nav,
+  aside,
+  header nav,
+  [data-print-hide] {
+    display: none !important;
+  }
+
+  .print-nomina table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11pt;
+  }
+
+  .print-nomina th,
+  .print-nomina td {
+    border: 1px solid #cbd5e1;
+    padding: 4px 6px;
+  }
+
+  .print-nomina thead {
+    background: #f1f5f9 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
