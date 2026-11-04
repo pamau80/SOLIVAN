@@ -1,16 +1,18 @@
 import { fail, ok } from "@/lib/api";
+import { assertSessionCanWrite } from "@/lib/auth/assert-write";
 import { requireSession } from "@/lib/auth/server-session";
-import { getDb } from "@/services/local/db";
-import { commitImport, previewImport } from "@/services/operations-service";
+import { getAppEnv } from "@/lib/env";
+import {
+  commitImportFacade,
+  listImportsFacade,
+  previewImportFacade,
+} from "@/services/operations-facade";
 
 export async function GET() {
   try {
     await requireSession();
-    const db = getDb();
-    return ok({
-      batches: db.importBatches,
-      rows: db.importBatchRows.slice(0, 200),
-    });
+    const data = await listImportsFacade();
+    return ok({ ...data, runtimeMode: getAppEnv().runtimeMode });
   } catch (error) {
     return fail(error, 401);
   }
@@ -18,13 +20,14 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    await requireSession();
+    const session = await requireSession();
     const body = await request.json();
     if (body?.action === "preview") {
-      return ok(previewImport(body));
+      return ok(await previewImportFacade(body));
     }
     if (body?.action === "commit") {
-      return ok({ batch: commitImport(body) });
+      assertSessionCanWrite(session);
+      return ok({ batch: await commitImportFacade(body) });
     }
     throw new Error("Acción de importación no soportada");
   } catch (error) {

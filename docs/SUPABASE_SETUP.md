@@ -18,6 +18,7 @@ En el SQL Editor (o CLI `supabase db push`) aplica en orden:
 1. `supabase/migrations/20261104120000_init_schema.sql`
 2. `supabase/migrations/20261104140000_rls_write_policies.sql`
 3. `supabase/migrations/20261104150000_profile_on_signup.sql`
+4. `supabase/migrations/20261104160000_demo_seed.sql` (catálogo/turnos demo)
 
 ## 3. Auth
 
@@ -47,4 +48,6 @@ curl -s http://localhost:3000/api/health
 - Las políticas RLS usan `public.has_role(...)` sobre `profiles`.
 - Domicilios/teléfonos permanecen restringidos a roles operativos.
 - La fachada `src/services/catalog-facade.ts` enruta lecturas y escrituras de catálogo (personas, habituales, flota, geografía, direcciones) a local o Supabase según `runtimeMode`.
+- La fachada `src/services/operations-facade.ts` enruta importación, planificación, ejecución, nóminas, reportes e historial.
 - El reinicio demo en `/admin` solo aplica en modo local.
+- Tras migrar, crea usuarios Auth y filas `profiles` (el seed no inserta perfiles: requieren `auth.users`).

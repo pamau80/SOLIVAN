@@ -48,9 +48,10 @@ Producción Supabase: ver `docs/SUPABASE_SETUP.md`.
 | `/nominas` | Visualización / Excel / CSV / impresión |
 | `/ejecucion` | Estados, excepciones e incidencias |
 | `/reportes` | Historial operacional y ocupación |
-| `/admin` | Roles de sesión y reset demo |
+| `/historial` | Excepciones e incidencias |
+| `/admin` | Roles de sesión, runtime y auditoría |
 
-Archivo de ejemplo: `public/sample-nomina.csv`.
+Archivo de ejemplo para importación: `public/sample-nomina.csv`.
 
 ## Scripts
 

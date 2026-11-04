@@ -1,4 +1,5 @@
 import { fail, ok } from "@/lib/api";
+import { assertSessionCanWrite } from "@/lib/auth/assert-write";
 import { requireSession } from "@/lib/auth/server-session";
 import {
   listFleetFacade,
@@ -19,7 +20,8 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    await requireSession();
+    const session = await requireSession();
+    assertSessionCanWrite(session);
     const body = await request.json();
     if (body?.entity === "provider") {
       return ok({ provider: await upsertProviderFacade(body) });

@@ -1,14 +1,16 @@
 import { fail, ok } from "@/lib/api";
+import { assertSessionCanWrite } from "@/lib/auth/assert-write";
 import { requireSession } from "@/lib/auth/server-session";
-import { getDb } from "@/services/local/db";
+import { getAppEnv } from "@/lib/env";
 import {
-  confirmOperation,
-  createException,
-  createPlannedOperation,
-  getOperationDetail,
-  registerIncident,
-  updatePassengerExecution,
-} from "@/services/operations-service";
+  confirmOperationFacade,
+  createExceptionFacade,
+  getOperationDetailFacade,
+  listOperationsFacade,
+  planOperationFacade,
+  registerIncidentFacade,
+  updatePassengerExecutionFacade,
+} from "@/services/operations-facade";
 
 export async function GET(request: Request) {
   try {
@@ -16,17 +18,12 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
     if (id) {
-      const detail = getOperationDetail(id);
+      const detail = await getOperationDetailFacade(id);
       if (!detail) return fail(new Error("Operación no encontrada"), 404);
-      return ok(detail);
+      return ok({ ...detail, runtimeMode: getAppEnv().runtimeMode });
     }
-    const db = getDb();
-    return ok({
-      operations: db.operations,
-      shifts: db.shifts,
-      vehicles: db.vehicles,
-      providers: db.providers,
-    });
+    const list = await listOperationsFacade();
+    return ok({ ...list, runtimeMode: getAppEnv().runtimeMode });
   } catch (error) {
     return fail(error, 401);
   }
@@ -34,19 +31,24 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    await requireSession();
+    const session = await requireSession();
+    assertSessionCanWrite(session);
     const body = await request.json();
     switch (body?.action) {
       case "plan":
-        return ok(createPlannedOperation(body));
+        return ok(await planOperationFacade(body));
       case "confirm":
-        return ok({ operation: confirmOperation(body.operationId) });
+        return ok({
+          operation: await confirmOperationFacade(body.operationId),
+        });
       case "exception":
-        return ok({ exception: createException(body) });
+        return ok({ exception: await createExceptionFacade(body) });
       case "execution":
-        return ok({ passenger: updatePassengerExecution(body) });
+        return ok({
+          passenger: await updatePassengerExecutionFacade(body),
+        });
       case "incident":
-        return ok({ incident: registerIncident(body) });
+        return ok({ incident: await registerIncidentFacade(body) });
       default:
         throw new Error("Acción de operación no soportada");
     }

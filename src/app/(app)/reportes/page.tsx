@@ -104,6 +104,42 @@ export default function ReportesPage() {
         <Button type="button" onClick={() => void load()}>
           Actualizar
         </Button>
+        <Button
+          type="button"
+          variant="secondary"
+          disabled={!report}
+          onClick={() => {
+            if (!report) return;
+            const header =
+              "fecha,turno,estado,pasajeros,asignados,transportados,ausentes,viajes,ocupacion,excepciones,incidencias";
+            const lines = report.rows.map((r) =>
+              [
+                r.date,
+                r.shiftCode,
+                r.status,
+                r.passengers,
+                r.assigned,
+                r.transported,
+                r.absent,
+                r.trips,
+                r.occupancyPercent,
+                r.exceptions,
+                r.incidents,
+              ].join(","),
+            );
+            const blob = new Blob([[header, ...lines].join("\n")], {
+              type: "text/csv;charset=utf-8",
+            });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `solivan-reportes-${new Date().toISOString().slice(0, 10)}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+          }}
+        >
+          Exportar CSV
+        </Button>
       </div>
 
       {report ? (

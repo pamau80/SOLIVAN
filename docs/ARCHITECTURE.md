@@ -48,8 +48,8 @@ Dos operadores con los mismos datos y parámetros deben obtener el mismo resulta
 | G | Planificación | Generación viajes + cupos |
 | H | Nóminas operativas | Vista/CSV/XLSX/print |
 | I | Control de ejecución | Estados + incidencias |
-| J | Historial | Snapshots + excepciones + audit |
-| K | Reportería | Dashboard + `/reportes` historial |
+| J | Historial | `/historial` excepciones + incidencias |
+| K | Reportería | Dashboard + `/reportes` + export CSV |
 | L | Administración | Roles sesión + reset demo + export auditoría |
 
 ### Capas de código

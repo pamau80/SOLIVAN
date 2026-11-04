@@ -1,7 +1,7 @@
 import * as XLSX from "xlsx";
 import { fail, ok } from "@/lib/api";
 import { requireSession } from "@/lib/auth/server-session";
-import { buildNomina } from "@/services/operations-service";
+import { buildNominaFacade } from "@/services/operations-facade";
 
 export async function GET(request: Request) {
   try {
@@ -13,7 +13,11 @@ export async function GET(request: Request) {
     const providerId = searchParams.get("providerId") ?? undefined;
     const vehicleId = searchParams.get("vehicleId") ?? undefined;
 
-    const nomina = buildNomina({ operationId, providerId, vehicleId });
+    const nomina = await buildNominaFacade({
+      operationId,
+      providerId,
+      vehicleId,
+    });
 
     if (format === "xlsx") {
       const sheet = XLSX.utils.json_to_sheet(nomina.rows);
