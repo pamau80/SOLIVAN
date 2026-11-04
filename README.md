@@ -61,6 +61,8 @@ Archivo de ejemplo para importación: `public/sample-nomina.csv`.
 |---------|-------------|
 | `npm run dev` | Servidor de desarrollo |
 | `npm run build` | Build de producción |
+| `npm run verify` | typecheck + lint + test + build |
+| `npm run smoke:local` | Smoke API contra `localhost:3000` |
 | `npm run typecheck` | TypeScript |
 | `npm test` | Pruebas unitarias (dominio + servicios) |
 | `npm run lint` | ESLint |

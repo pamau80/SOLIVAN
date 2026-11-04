@@ -29,6 +29,7 @@ const conditionLabel: Record<string, string> = {
 
 export default function PersonasPage() {
   const [data, setData] = useState<Payload | null>(null);
+  const [inactive, setInactive] = useState<Person[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [form, setForm] = useState({
@@ -39,8 +40,12 @@ export default function PersonasPage() {
   });
 
   async function load() {
-    const payload = await apiFetch<Payload>("/api/persons");
+    const [payload, inactivePayload] = await Promise.all([
+      apiFetch<Payload>("/api/persons"),
+      apiFetch<{ persons: Person[] }>("/api/persons?inactive=1"),
+    ]);
     setData(payload);
+    setInactive(inactivePayload.persons);
   }
 
   useEffect(() => {
@@ -103,6 +108,20 @@ export default function PersonasPage() {
         body: JSON.stringify({ action: "deactivate", personId }),
       });
       setMessage("Persona desactivada");
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error");
+    }
+  }
+
+  async function reactivate(personId: string) {
+    setError(null);
+    try {
+      await apiFetch("/api/persons", {
+        method: "POST",
+        body: JSON.stringify({ action: "reactivate", personId }),
+      });
+      setMessage("Persona reactivada");
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error");
@@ -261,6 +280,33 @@ export default function PersonasPage() {
           </tbody>
         </table>
       </div>
+
+      <section className="mt-8 rounded-lg border border-slate-200 bg-white p-4">
+        <h3 className="text-sm font-semibold">Personas inactivas</h3>
+        <ul className="mt-3 divide-y text-sm">
+          {inactive.map((person) => (
+            <li
+              key={person.id}
+              className="flex items-center justify-between gap-3 py-2"
+            >
+              <span>
+                <span className="font-mono text-xs">{person.externalId}</span> ·{" "}
+                {person.fullName}
+              </span>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => void reactivate(person.id)}
+              >
+                Reactivar
+              </Button>
+            </li>
+          ))}
+          {inactive.length === 0 ? (
+            <li className="py-2 text-slate-500">Sin bajas.</li>
+          ) : null}
+        </ul>
+      </section>
     </div>
   );
 }
