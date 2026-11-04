@@ -98,9 +98,9 @@ export default function NominasPage() {
       </div>
 
       {nomina ? (
-        <div className="overflow-hidden rounded-lg border bg-white print:border-0">
+        <div className="print-nomina overflow-hidden rounded-lg border bg-white print:border-0">
           <div className="border-b px-4 py-3 text-sm font-semibold">
-            Nómina SOLIVAN
+            Nómina SOLIVAN · {operationId.slice(0, 8)}
           </div>
           <table className="min-w-full text-sm">
             <thead className="bg-slate-50 text-xs uppercase text-slate-500">

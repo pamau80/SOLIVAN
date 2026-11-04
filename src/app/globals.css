@@ -21,3 +21,35 @@ code,
 .font-mono {
   font-family: var(--font-plex-mono), ui-monospace, monospace;
 }
+
+@media print {
+  body {
+    background: #fff;
+  }
+
+  .print\:hidden,
+  nav,
+  aside,
+  header nav,
+  [data-print-hide] {
+    display: none !important;
+  }
+
+  .print-nomina table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11pt;
+  }
+
+  .print-nomina th,
+  .print-nomina td {
+    border: 1px solid #cbd5e1;
+    padding: 4px 6px;
+  }
+
+  .print-nomina thead {
+    background: #f1f5f9 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

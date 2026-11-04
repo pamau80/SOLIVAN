@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
+  deactivatePerson,
   linkPersonAddress,
   listPersons,
   upsertAddress,
@@ -21,5 +22,11 @@ describe("addresses", () => {
     const person = listPersons()[0];
     const linked = linkPersonAddress(person.id, address.id);
     expect(linked.addressId).toBe(address.id);
+  });
+
+  it("desactiva persona y la saca del listado activo", () => {
+    const person = listPersons()[0];
+    deactivatePerson(person.id);
+    expect(listPersons().some((p) => p.id === person.id)).toBe(false);
   });
 });

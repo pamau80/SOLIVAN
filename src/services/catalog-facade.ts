@@ -138,3 +138,8 @@ export async function upsertAddressFacade(input: {
   if (isSupabase()) return supabase.supabaseUpsertAddress(input);
   return local.upsertAddress(input);
 }
+
+export async function deactivatePersonFacade(personId: string): Promise<Person> {
+  if (isSupabase()) return supabase.supabaseDeactivatePerson(personId);
+  return local.deactivatePerson(personId);
+}

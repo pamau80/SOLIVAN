@@ -94,6 +94,21 @@ export default function PersonasPage() {
     }
   }
 
+  async function deactivate(personId: string, fullName: string) {
+    if (!window.confirm(`¿Desactivar a ${fullName}?`)) return;
+    setError(null);
+    try {
+      await apiFetch("/api/persons", {
+        method: "POST",
+        body: JSON.stringify({ action: "deactivate", personId }),
+      });
+      setMessage("Persona desactivada");
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error");
+    }
+  }
+
   async function linkAddress(personId: string, addressId: string) {
     setError(null);
     try {
@@ -178,6 +193,7 @@ export default function PersonasPage() {
               <th className="px-4 py-3">Habitual</th>
               <th className="px-4 py-3">Dirección</th>
               <th className="px-4 py-3">Asignar</th>
+              <th className="px-4 py-3">Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -229,6 +245,15 @@ export default function PersonasPage() {
                         </option>
                       ))}
                     </select>
+                  </td>
+                  <td className="px-4 py-3">
+                    <Button
+                      type="button"
+                      variant="danger"
+                      onClick={() => void deactivate(person.id, person.fullName)}
+                    >
+                      Baja
+                    </Button>
                   </td>
                 </tr>
               );

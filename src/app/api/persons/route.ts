@@ -2,6 +2,7 @@ import { fail, ok } from "@/lib/api";
 import { assertSessionCanWrite } from "@/lib/auth/assert-write";
 import { requireSession } from "@/lib/auth/server-session";
 import {
+  deactivatePersonFacade,
   linkPersonAddressFacade,
   listFleetFacade,
   listGeographyFacade,
@@ -52,6 +53,10 @@ export async function POST(request: Request) {
         body.personId,
         body.addressId ?? null,
       );
+      return ok({ person });
+    }
+    if (body?.action === "deactivate") {
+      const person = await deactivatePersonFacade(body.personId);
       return ok({ person });
     }
     const person = await upsertPersonFacade(body);

@@ -370,3 +370,20 @@ export function linkPersonAddress(personId: string, addressId: string | null) {
   saveDb();
   return person;
 }
+
+export function deactivatePerson(personId: string) {
+  assertCanWrite();
+  const db = getDb();
+  const person = db.persons.find((p) => p.id === personId);
+  if (!person) throw new Error("Persona no encontrada");
+  person.isActive = false;
+  for (const item of db.habitualAssignments) {
+    if (item.personId === personId && item.isCurrent) {
+      item.isCurrent = false;
+      item.validTo = new Date().toISOString().slice(0, 10);
+    }
+  }
+  audit("person.deactivate", "person", personId);
+  saveDb();
+  return person;
+}

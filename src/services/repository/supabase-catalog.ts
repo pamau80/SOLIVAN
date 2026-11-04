@@ -490,6 +490,28 @@ export async function supabaseUpsertAddress(input: {
   return mapAddress(data as Record<string, unknown>);
 }
 
+export async function supabaseDeactivatePerson(personId: string): Promise<Person> {
+  const supabase = await client();
+  const today = new Date().toISOString().slice(0, 10);
+  await supabase
+    .from("habitual_assignments")
+    .update({ is_current: false, valid_to: today })
+    .eq("person_id", personId)
+    .eq("is_current", true);
+
+  const { data, error } = await supabase
+    .from("persons")
+    .update({
+      is_active: false,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", personId)
+    .select("*")
+    .single();
+  if (error) throw new Error(error.message);
+  return mapPerson(data as Record<string, unknown>);
+}
+
 export async function supabaseGetProfileRole(
   userId: string,
 ): Promise<string | null> {
