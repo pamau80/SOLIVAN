@@ -809,47 +809,110 @@ export async function supabaseBuildOperationalReport(filters?: {
   to?: string;
   shiftCode?: string;
 }) {
+  const supabase = await client();
   const list = await supabaseListOperations();
   const shiftsById = new Map(list.shifts.map((s) => [s.id, s]));
-  const rows = [];
 
-  for (const op of list.operations) {
-    if (filters?.from && op.operationDate < filters.from) continue;
-    if (filters?.to && op.operationDate > filters.to) continue;
+  const operations = list.operations.filter((op) => {
+    if (filters?.from && op.operationDate < filters.from) return false;
+    if (filters?.to && op.operationDate > filters.to) return false;
+    if (filters?.shiftCode) {
+      const shift = shiftsById.get(op.shiftId);
+      if (!shift || shift.code !== filters.shiftCode) return false;
+    }
+    return true;
+  });
+
+  const opIds = operations.map((o) => o.id);
+  if (opIds.length === 0) {
+    return {
+      rows: [],
+      totals: {
+        operations: 0,
+        passengers: 0,
+        transported: 0,
+        absent: 0,
+        exceptions: 0,
+        incidents: 0,
+        avgOccupancyPercent: 0,
+      },
+    };
+  }
+
+  const [passengersRes, tripsRes, exceptionsRes, incidentsRes] =
+    await Promise.all([
+      supabase.from("operation_passengers").select("*").in("operation_id", opIds),
+      supabase.from("trips").select("*").in("operation_id", opIds),
+      supabase
+        .from("assignment_exceptions")
+        .select("id, operation_id")
+        .in("operation_id", opIds),
+      supabase
+        .from("incidents")
+        .select("id, operation_id")
+        .in("operation_id", opIds),
+    ]);
+  if (passengersRes.error) throw new Error(passengersRes.error.message);
+  if (tripsRes.error) throw new Error(tripsRes.error.message);
+  if (exceptionsRes.error) throw new Error(exceptionsRes.error.message);
+  if (incidentsRes.error) throw new Error(incidentsRes.error.message);
+
+  const trips = (tripsRes.data ?? []).map((row) =>
+    mapTrip(row as Record<string, unknown>),
+  );
+  const tripIds = trips.map((t) => t.id);
+  let assignments: TripAssignment[] = [];
+  if (tripIds.length) {
+    const { data, error } = await supabase
+      .from("trip_assignments")
+      .select("*")
+      .in("trip_id", tripIds);
+    if (error) throw new Error(error.message);
+    assignments = (data ?? []).map((row) =>
+      mapAssignment(row as Record<string, unknown>),
+    );
+  }
+
+  const passengers = (passengersRes.data ?? []).map((row) =>
+    mapPassenger(row as Record<string, unknown>),
+  );
+
+  const rows = operations.map((op) => {
     const shift = shiftsById.get(op.shiftId);
-    if (filters?.shiftCode && shift?.code !== filters.shiftCode) continue;
-
-    const detail = await supabaseGetOperationDetail(op.id);
-    if (!detail) continue;
-    const assigned = detail.assignments.length;
-    rows.push({
+    const opPassengers = passengers.filter((p) => p.operationId === op.id);
+    const opTrips = trips.filter((t) => t.operationId === op.id);
+    const opAssignments = assignments.filter((a) =>
+      opTrips.some((t) => t.id === a.tripId),
+    );
+    const capacityTotal = opTrips.reduce((s, t) => s + t.plannedCapacity, 0);
+    const assigned = opAssignments.length;
+    return {
       operationId: op.id,
       date: op.operationDate,
       shiftCode: shift?.code ?? "?",
       status: op.status,
-      passengers: detail.passengers.length,
-      assigned: detail.passengers.filter((p) =>
+      passengers: opPassengers.length,
+      assigned: opPassengers.filter((p) =>
         ["assigned", "transported", "reassigned"].includes(p.executionStatus),
       ).length,
-      transported: detail.passengers.filter(
+      transported: opPassengers.filter(
         (p) => p.executionStatus === "transported",
       ).length,
-      absent: detail.passengers.filter((p) => p.executionStatus === "absent")
-        .length,
-      unassigned: Math.max(0, detail.passengers.length - assigned),
-      trips: detail.trips.length,
-      exceptions: detail.exceptions.length,
-      incidents: detail.incidents.length,
+      absent: opPassengers.filter((p) => p.executionStatus === "absent").length,
+      unassigned: Math.max(0, opPassengers.length - assigned),
+      trips: opTrips.length,
+      exceptions: (exceptionsRes.data ?? []).filter(
+        (e) => e.operation_id === op.id,
+      ).length,
+      incidents: (incidentsRes.data ?? []).filter(
+        (i) => i.operation_id === op.id,
+      ).length,
       occupancyPercent:
-        detail.trips.length === 0
+        capacityTotal === 0
           ? 0
-          : Math.round(
-              (assigned /
-                detail.trips.reduce((s, t) => s + t.plannedCapacity, 0)) *
-                1000,
-            ) / 10,
-    });
-  }
+          : Math.round((assigned / capacityTotal) * 1000) / 10,
+    };
+  });
 
   rows.sort((a, b) => b.date.localeCompare(a.date));
   const totals = {

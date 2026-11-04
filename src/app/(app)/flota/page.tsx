@@ -106,9 +106,29 @@ export default function FlotaPage() {
           <div className="border-b px-4 py-3 text-sm font-semibold">Proveedores</div>
           <ul className="divide-y text-sm">
             {(data?.providers ?? []).map((p) => (
-              <li key={p.id} className="px-4 py-3">
-                <p className="font-medium">{p.name}</p>
-                <p className="text-xs text-slate-500">{p.code}</p>
+              <li key={p.id} className="flex items-center justify-between gap-2 px-4 py-3">
+                <div>
+                  <p className="font-medium">{p.name}</p>
+                  <p className="text-xs text-slate-500">{p.code}</p>
+                </div>
+                {p.isActive ? (
+                  <Button
+                    type="button"
+                    variant="danger"
+                    onClick={() =>
+                      void apiFetch("/api/fleet", {
+                        method: "POST",
+                        body: JSON.stringify({
+                          entity: "provider",
+                          action: "deactivate",
+                          id: p.id,
+                        }),
+                      }).then(load).catch((err: Error) => setError(err.message))
+                    }
+                  >
+                    Baja
+                  </Button>
+                ) : null}
               </li>
             ))}
           </ul>
@@ -122,15 +142,34 @@ export default function FlotaPage() {
                 <th className="px-4 py-3 text-left">Etiqueta</th>
                 <th className="px-4 py-3 text-left">Capacidad</th>
                 <th className="px-4 py-3 text-left">Estado</th>
+                <th className="px-4 py-3 text-left">Acciones</th>
               </tr>
             </thead>
             <tbody>
-              {(data?.vehicles ?? []).map((v) => (
+              {(data?.vehicles ?? []).filter((v) => v.isActive).map((v) => (
                 <tr key={v.id} className="border-t">
                   <td className="px-4 py-3 font-mono text-xs">{v.plate}</td>
                   <td className="px-4 py-3">{v.label}</td>
                   <td className="px-4 py-3 tabular-nums">{v.authorizedCapacity}</td>
                   <td className="px-4 py-3 capitalize">{v.status}</td>
+                  <td className="px-4 py-3">
+                    <Button
+                      type="button"
+                      variant="danger"
+                      onClick={() =>
+                        void apiFetch("/api/fleet", {
+                          method: "POST",
+                          body: JSON.stringify({
+                            entity: "vehicle",
+                            action: "deactivate",
+                            id: v.id,
+                          }),
+                        }).then(load).catch((err: Error) => setError(err.message))
+                      }
+                    >
+                      Baja
+                    </Button>
+                  </td>
                 </tr>
               ))}
             </tbody>

@@ -387,3 +387,45 @@ export function deactivatePerson(personId: string) {
   saveDb();
   return person;
 }
+
+export function reactivatePerson(personId: string) {
+  assertCanWrite();
+  const db = getDb();
+  const person = db.persons.find((p) => p.id === personId);
+  if (!person) throw new Error("Persona no encontrada");
+  person.isActive = true;
+  audit("person.reactivate", "person", personId);
+  saveDb();
+  return person;
+}
+
+export function setEntityActive(
+  kind: "zone" | "commune" | "sector" | "provider" | "vehicle",
+  id: string,
+  isActive: boolean,
+) {
+  assertCanWrite();
+  const db = getDb();
+  const collections = {
+    zone: db.zones,
+    commune: db.communes,
+    sector: db.sectors,
+    provider: db.providers,
+    vehicle: db.vehicles,
+  } as const;
+  const list = collections[kind];
+  const item = list.find((row) => row.id === id);
+  if (!item) throw new Error("Registro no encontrado");
+  item.isActive = isActive;
+  audit(
+    isActive ? `${kind}.reactivate` : `${kind}.deactivate`,
+    kind,
+    id,
+  );
+  saveDb();
+  return item;
+}
+
+export function listInactivePersons() {
+  return getDb().persons.filter((p) => !p.isActive);
+}

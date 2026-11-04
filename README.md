@@ -51,6 +51,8 @@ Producción Supabase: ver `docs/SUPABASE_SETUP.md`.
 | `/historial` | Excepciones e incidencias |
 | `/admin` | Roles de sesión, runtime y auditoría |
 
+APIs útiles: `/api/capacity-queue`, `/api/day-export?date=YYYY-MM-DD&format=json-download`.
+
 Archivo de ejemplo para importación: `public/sample-nomina.csv`.
 
 ## Scripts

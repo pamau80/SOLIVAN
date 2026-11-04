@@ -1,8 +1,10 @@
 import { fail, ok } from "@/lib/api";
 import { assertSessionCanWrite } from "@/lib/auth/assert-write";
 import { requireSession } from "@/lib/auth/server-session";
+import { fleetPostSchema } from "@/domain/schemas/catalog";
 import {
   listFleetFacade,
+  setEntityActiveFacade,
   upsertProviderFacade,
   upsertVehicleFacade,
 } from "@/services/catalog-facade";
@@ -22,14 +24,18 @@ export async function POST(request: Request) {
   try {
     const session = await requireSession();
     assertSessionCanWrite(session);
-    const body = await request.json();
-    if (body?.entity === "provider") {
+    const body = fleetPostSchema.parse(await request.json());
+
+    if ("action" in body) {
+      const isActive = body.action === "reactivate";
+      return ok({
+        item: await setEntityActiveFacade(body.entity, body.id, isActive),
+      });
+    }
+    if (body.entity === "provider") {
       return ok({ provider: await upsertProviderFacade(body) });
     }
-    if (body?.entity === "vehicle") {
-      return ok({ vehicle: await upsertVehicleFacade(body) });
-    }
-    throw new Error("Entidad de flota no soportada");
+    return ok({ vehicle: await upsertVehicleFacade(body) });
   } catch (error) {
     return fail(error);
   }

@@ -49,6 +49,17 @@ export async function supabaseListPersons(): Promise<Person[]> {
   return (data ?? []).map((row) => mapPerson(row as Record<string, unknown>));
 }
 
+export async function supabaseListInactivePersons(): Promise<Person[]> {
+  const supabase = await client();
+  const { data, error } = await supabase
+    .from("persons")
+    .select("*")
+    .eq("is_active", false)
+    .order("full_name");
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((row) => mapPerson(row as Record<string, unknown>));
+}
+
 export async function supabaseUpsertPerson(input: unknown): Promise<Person> {
   const parsed = personDraftSchema.parse(input);
   const supabase = await client();
@@ -510,6 +521,47 @@ export async function supabaseDeactivatePerson(personId: string): Promise<Person
     .single();
   if (error) throw new Error(error.message);
   return mapPerson(data as Record<string, unknown>);
+}
+
+export async function supabaseReactivatePerson(personId: string): Promise<Person> {
+  const supabase = await client();
+  const { data, error } = await supabase
+    .from("persons")
+    .update({
+      is_active: true,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", personId)
+    .select("*")
+    .single();
+  if (error) throw new Error(error.message);
+  return mapPerson(data as Record<string, unknown>);
+}
+
+export async function supabaseSetEntityActive(
+  kind: "zone" | "commune" | "sector" | "provider" | "vehicle",
+  id: string,
+  isActive: boolean,
+) {
+  const table =
+    kind === "zone"
+      ? "zones"
+      : kind === "commune"
+        ? "communes"
+        : kind === "sector"
+          ? "sectors"
+          : kind === "provider"
+            ? "providers"
+            : "vehicles";
+  const supabase = await client();
+  const { data, error } = await supabase
+    .from(table)
+    .update({ is_active: isActive, updated_at: new Date().toISOString() })
+    .eq("id", id)
+    .select("*")
+    .single();
+  if (error) throw new Error(error.message);
+  return data;
 }
 
 export async function supabaseGetProfileRole(

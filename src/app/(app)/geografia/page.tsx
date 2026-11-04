@@ -46,6 +46,10 @@ export default function GeografiaPage() {
 
   async function submit(event: FormEvent, body: Record<string, unknown>) {
     event.preventDefault();
+    await post(body);
+  }
+
+  async function post(body: Record<string, unknown>) {
     setError(null);
     try {
       await apiFetch("/api/geography", {
@@ -138,9 +142,33 @@ export default function GeografiaPage() {
       </div>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-2 xl:grid-cols-4">
-        <List title="Zonas" items={(data?.zones ?? []).map((z) => `${z.code} · ${z.name}`)} />
-        <List title="Comunas" items={(data?.communes ?? []).map((c) => `${c.name}${c.region ? ` (${c.region})` : ""}`)} />
-        <List title="Sectores" items={(data?.sectors ?? []).map((s) => `${s.code} · ${s.name}`)} />
+        <section className="rounded-lg border border-slate-200 bg-white p-4">
+          <h3 className="text-sm font-semibold">Zonas</h3>
+          <ul className="mt-2 space-y-2 text-sm text-slate-700">
+            {(data?.zones ?? []).filter((z) => z.isActive).map((z) => (
+              <li key={z.id} className="flex items-center justify-between gap-2">
+                <span>
+                  {z.code} · {z.name}
+                </span>
+                <Button
+                  type="button"
+                  variant="danger"
+                  onClick={() =>
+                    void post({
+                      entity: "zone",
+                      action: "deactivate",
+                      id: z.id,
+                    })
+                  }
+                >
+                  Baja
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </section>
+        <List title="Comunas" items={(data?.communes ?? []).filter((c) => c.isActive).map((c) => `${c.name}${c.region ? ` (${c.region})` : ""}`)} />
+        <List title="Sectores" items={(data?.sectors ?? []).filter((s) => s.isActive).map((s) => `${s.code} · ${s.name}`)} />
         <List title="Direcciones" items={(data?.addresses ?? []).map((a) => `${a.streetLine}${a.reference ? ` (${a.reference})` : ""}`)} />
       </div>
     </div>

@@ -1,22 +1,33 @@
 import { fail, ok } from "@/lib/api";
 import { assertSessionCanWrite } from "@/lib/auth/assert-write";
 import { requireSession } from "@/lib/auth/server-session";
+import { personsPostSchema } from "@/domain/schemas/catalog";
 import {
   deactivatePersonFacade,
   linkPersonAddressFacade,
   listFleetFacade,
   listGeographyFacade,
   listHabitualFacade,
+  listInactivePersonsFacade,
   listPersonsFacade,
+  reactivatePersonFacade,
   setHabitualFacade,
   upsertPersonFacade,
 } from "@/services/catalog-facade";
 import { getAppEnv } from "@/lib/env";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     await requireSession();
     const env = getAppEnv();
+    const { searchParams } = new URL(request.url);
+    if (searchParams.get("inactive") === "1") {
+      return ok({
+        persons: await listInactivePersonsFacade(),
+        runtimeMode: env.runtimeMode,
+      });
+    }
+
     const [persons, habitualAssignments, fleet, geography] = await Promise.all([
       listPersonsFacade(),
       listHabitualFacade(),
@@ -43,24 +54,27 @@ export async function POST(request: Request) {
   try {
     const session = await requireSession();
     assertSessionCanWrite(session);
-    const body = await request.json();
-    if (body?.action === "setHabitual") {
-      const assignment = await setHabitualFacade(body);
-      return ok({ assignment });
+    const body = personsPostSchema.parse(await request.json());
+
+    if ("action" in body && body.action === "setHabitual") {
+      return ok({ assignment: await setHabitualFacade(body) });
     }
-    if (body?.action === "linkAddress") {
-      const person = await linkPersonAddressFacade(
-        body.personId,
-        body.addressId ?? null,
-      );
-      return ok({ person });
+    if ("action" in body && body.action === "linkAddress") {
+      return ok({
+        person: await linkPersonAddressFacade(
+          body.personId,
+          body.addressId ?? null,
+        ),
+      });
     }
-    if (body?.action === "deactivate") {
-      const person = await deactivatePersonFacade(body.personId);
-      return ok({ person });
+    if ("action" in body && body.action === "deactivate") {
+      return ok({ person: await deactivatePersonFacade(body.personId) });
     }
-    const person = await upsertPersonFacade(body);
-    return ok({ person });
+    if ("action" in body && body.action === "reactivate") {
+      return ok({ person: await reactivatePersonFacade(body.personId) });
+    }
+
+    return ok({ person: await upsertPersonFacade(body) });
   } catch (error) {
     return fail(error);
   }

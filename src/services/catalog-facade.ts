@@ -143,3 +143,24 @@ export async function deactivatePersonFacade(personId: string): Promise<Person> 
   if (isSupabase()) return supabase.supabaseDeactivatePerson(personId);
   return local.deactivatePerson(personId);
 }
+
+export async function reactivatePersonFacade(personId: string): Promise<Person> {
+  if (isSupabase()) return supabase.supabaseReactivatePerson(personId);
+  return local.reactivatePerson(personId);
+}
+
+export async function setEntityActiveFacade(
+  kind: "zone" | "commune" | "sector" | "provider" | "vehicle",
+  id: string,
+  isActive: boolean,
+) {
+  if (isSupabase()) {
+    return supabase.supabaseSetEntityActive(kind, id, isActive);
+  }
+  return local.setEntityActive(kind, id, isActive);
+}
+
+export async function listInactivePersonsFacade(): Promise<Person[]> {
+  if (isSupabase()) return supabase.supabaseListInactivePersons();
+  return local.listInactivePersons();
+}

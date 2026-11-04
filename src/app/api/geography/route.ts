@@ -1,8 +1,10 @@
 import { fail, ok } from "@/lib/api";
 import { assertSessionCanWrite } from "@/lib/auth/assert-write";
 import { requireSession } from "@/lib/auth/server-session";
+import { geographyPostSchema } from "@/domain/schemas/catalog";
 import {
   listGeographyFacade,
+  setEntityActiveFacade,
   upsertAddressFacade,
   upsertCommuneFacade,
   upsertSectorFacade,
@@ -24,20 +26,24 @@ export async function POST(request: Request) {
   try {
     const session = await requireSession();
     assertSessionCanWrite(session);
-    const body = await request.json();
-    if (body?.entity === "zone") {
+    const body = geographyPostSchema.parse(await request.json());
+
+    if ("action" in body) {
+      const isActive = body.action === "reactivate";
+      return ok({
+        item: await setEntityActiveFacade(body.entity, body.id, isActive),
+      });
+    }
+    if (body.entity === "zone") {
       return ok({ zone: await upsertZoneFacade(body) });
     }
-    if (body?.entity === "commune") {
+    if (body.entity === "commune") {
       return ok({ commune: await upsertCommuneFacade(body) });
     }
-    if (body?.entity === "sector") {
+    if (body.entity === "sector") {
       return ok({ sector: await upsertSectorFacade(body) });
     }
-    if (body?.entity === "address") {
-      return ok({ address: await upsertAddressFacade(body) });
-    }
-    throw new Error("Entidad geográfica no soportada");
+    return ok({ address: await upsertAddressFacade(body) });
   } catch (error) {
     return fail(error);
   }

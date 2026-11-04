@@ -1,6 +1,7 @@
 import { fail, ok } from "@/lib/api";
 import { assertSessionCanWrite } from "@/lib/auth/assert-write";
 import { requireSession } from "@/lib/auth/server-session";
+import { operationsPostSchema } from "@/domain/schemas/operations";
 import { getAppEnv } from "@/lib/env";
 import {
   confirmOperationFacade,
@@ -33,8 +34,8 @@ export async function POST(request: Request) {
   try {
     const session = await requireSession();
     assertSessionCanWrite(session);
-    const body = await request.json();
-    switch (body?.action) {
+    const body = operationsPostSchema.parse(await request.json());
+    switch (body.action) {
       case "plan":
         return ok(await planOperationFacade(body));
       case "confirm":
