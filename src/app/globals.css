@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #f4f6f8;
+  --foreground: #0f172a;
+  --brand-navy: #0f2744;
+  --brand-accent: #0284c7;
+  --surface: #ffffff;
+  --border: #e2e8f0;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: var(--font-plex-sans), "Segoe UI", sans-serif;
+}
+
+code,
+.font-mono {
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+}
