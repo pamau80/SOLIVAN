@@ -5,6 +5,9 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["src/**/*.test.ts"],
+    env: {
+      SOLIVAN_DATA_FILE: path.resolve(__dirname, ".data/solivan-test.json"),
+    },
   },
   resolve: {
     alias: {

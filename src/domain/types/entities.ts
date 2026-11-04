@@ -90,7 +90,9 @@ export interface Operation {
   operationDate: string;
   shiftId: UUID;
   status: OperationStatus;
+  importBatchId: UUID | null;
   notes: string | null;
+  confirmedAt: string | null;
 }
 
 export interface OperationPassenger {

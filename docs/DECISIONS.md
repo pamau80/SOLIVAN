@@ -29,5 +29,10 @@
 
 ## ADR-006 — Modo local sin secrets
 
-- **Decisión:** Repositorio en memoria cuando no hay env de Supabase.
-- **Motivo:** Permitir desarrollo/demo del shell sin bloquear FASE 1.
+- **Decisión:** Persistencia JSON en `.data/solivan-local.json` + singleton de proceso cuando no hay env de Supabase.
+- **Motivo:** Permitir desarrollo/demo completo del ciclo operacional sin bloquear por secrets. Producción debe usar Supabase.
+
+## ADR-007 — Excel solo como frontera
+
+- **Decisión:** Import/export CSV/XLSX; el motor y la persistencia son independientes de planillas.
+- **Motivo:** Cumplir el principio de autonomía respecto de Excel.

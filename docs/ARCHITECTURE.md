@@ -39,18 +39,18 @@ Dos operadores con los mismos datos y parámetros deben obtener el mismo resulta
 
 | Código | Módulo | Estado FASE 1 |
 |--------|--------|---------------|
-| A | Personas | Modelo + tipos |
-| B | Geografía | Modelo + tipos |
-| C | Proveedores | Modelo + tipos |
-| D | Vehículos | Modelo + tipos |
-| E | Importación de nóminas | Modelo |
-| F | Motor identificación/asignación | Esqueleto de reglas |
-| G | Planificación | Modelo |
-| H | Nóminas operativas | Modelo |
-| I | Control de ejecución | Modelo |
-| J | Historial | Modelo (snapshots) |
-| K | Reportería | Pendiente FASE 9 |
-| L | Administración | Modelo usuarios/roles |
+| A | Personas | CRUD + habituales (API/UI) |
+| B | Geografía | CRUD zonas/comunas/sectores |
+| C | Proveedores | CRUD |
+| D | Vehículos | CRUD + capacidad |
+| E | Importación de nóminas | CSV/Excel preview+commit |
+| F | Motor identificación/asignación | Reglas + planning |
+| G | Planificación | Generación viajes + cupos |
+| H | Nóminas operativas | Vista/CSV/XLSX/print |
+| I | Control de ejecución | Estados + incidencias |
+| J | Historial | Snapshots + excepciones + audit |
+| K | Reportería | Dashboard operacional |
+| L | Administración | Roles sesión + reset demo |
 
 ### Capas de código
 

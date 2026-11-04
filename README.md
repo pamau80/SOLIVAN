@@ -7,10 +7,10 @@ Objetivo: reemplazar el proceso basado en Excel por un sistema centralizado, est
 ## Stack
 
 - Next.js (App Router) + React + TypeScript
-- Tailwind CSS
-- Zod
-- Supabase (PostgreSQL + Auth + RLS)
-- Vitest (motor de reglas)
+- Tailwind CSS + Zod + Vitest
+- Supabase (PostgreSQL + Auth + RLS) — producción
+- Persistencia local JSON (`.data/`) — desarrollo/demo
+- Papa Parse + SheetJS — import/export CSV/Excel
 
 ## Inicio rápido
 
@@ -20,7 +20,25 @@ cp .env.example .env.local   # opcional: configurar Supabase
 npm run dev
 ```
 
-Sin variables de Supabase, la aplicación arranca en **modo local** con datos demo.
+Sin variables de Supabase, la aplicación arranca en **modo local** con datos demo persistidos en `.data/`.
+
+Abre `http://localhost:3000`.
+
+## Módulos disponibles
+
+| Ruta | Función |
+|------|---------|
+| `/dashboard` | KPIs y auditoría reciente |
+| `/personas` | Ficha maestra + asignación habitual |
+| `/geografia` | Zonas, comunas, sectores |
+| `/flota` | Proveedores y vehículos/capacidad |
+| `/importacion` | Import CSV/Excel con preview |
+| `/planificacion` | Motor de cupos y viajes |
+| `/nominas` | Visualización / Excel / CSV / impresión |
+| `/ejecucion` | Estados, excepciones e incidencias |
+| `/admin` | Roles de sesión y reset demo |
+
+Archivo de ejemplo: `public/sample-nomina.csv`.
 
 ## Scripts
 
@@ -28,15 +46,12 @@ Sin variables de Supabase, la aplicación arranca en **modo local** con datos de
 |---------|-------------|
 | `npm run dev` | Servidor de desarrollo |
 | `npm run build` | Build de producción |
-| `npm run typecheck` | Verificación TypeScript |
-| `npm test` | Pruebas unitarias del dominio |
+| `npm run typecheck` | TypeScript |
+| `npm test` | Pruebas unitarias (dominio + servicios) |
+| `npm run lint` | ESLint |
 
 ## Documentación
 
-- [Arquitectura y diagnóstico FASE 0](docs/ARCHITECTURE.md)
-- [Decisiones de arquitectura](docs/DECISIONS.md)
+- [Arquitectura](docs/ARCHITECTURE.md)
+- [Decisiones](docs/DECISIONS.md)
 - Migraciones SQL: `supabase/migrations/`
-
-## Fases
-
-Ver roadmap completo en `docs/ARCHITECTURE.md`. **FASE 1** entrega modelo de datos, shell empresarial y motor de reglas base.

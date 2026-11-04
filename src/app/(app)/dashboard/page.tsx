@@ -1,80 +1,114 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { StatCard } from "@/components/ui/StatCard";
-import { summarizeCapacity } from "@/domain/rules";
-import { getAppEnv } from "@/lib/env";
-import { demoStore } from "@/services/local/demo-store";
+import { Alert } from "@/components/ui/Alert";
+import { apiFetch } from "@/lib/client-api";
+
+type DashboardPayload = {
+  stats: {
+    persons: number;
+    usesTransport: number;
+    vehiclesAvailable: number;
+    totalCapacity: number;
+    operations: number;
+    openOperations: number;
+    importBatches: number;
+    exceptions: number;
+    incidents: number;
+    auditRecent: Array<{
+      id: string;
+      action: string;
+      entityType: string;
+      createdAt: string;
+    }>;
+  };
+  session: { role: string };
+  mode: string;
+};
 
 export default function DashboardPage() {
-  const env = getAppEnv();
-  const personsUsingTransport = demoStore.persons.filter(
-    (person) => person.transportCondition === "uses_transport",
-  ).length;
+  const [data, setData] = useState<DashboardPayload | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const capacity = summarizeCapacity({
-    passengersScheduled: personsUsingTransport,
-    vehicles: demoStore.vehicles.map((vehicle) => ({
-      vehicle,
-      assignedPassengers: 0,
-    })),
-  });
+  useEffect(() => {
+    apiFetch<DashboardPayload>("/api/dashboard")
+      .then(setData)
+      .catch((err: Error) => setError(err.message));
+  }, []);
+
+  if (error) {
+    return <Alert tone="error">{error}</Alert>;
+  }
+
+  if (!data) {
+    return <p className="text-sm text-slate-600">Cargando dashboard…</p>;
+  }
+
+  const { stats } = data;
 
   return (
     <div>
       <PageHeader
         title="Dashboard operacional"
-        description="Vista inicial de SOLIVAN. En FASE 1 el foco es el modelo de datos, el shell empresarial y el motor de reglas base."
+        description="Indicadores vivos del ciclo de transporte. Datos en modo local hasta conectar Supabase."
       />
 
-      <div className="mb-6 rounded-lg border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-950">
-        Runtime: <strong>{env.runtimeMode}</strong>.
-        {env.runtimeMode === "local"
-          ? " Configura Supabase con las variables de entorno para conectar PostgreSQL real."
-          : " Conectado a Supabase."}
+      <div className="mb-6">
+        <Alert tone="info">
+          Runtime <strong>{data.mode}</strong> · rol sesión{" "}
+          <strong>{data.session.role}</strong>
+        </Alert>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
-          label="Personas (demo)"
-          value={demoStore.persons.length}
-          hint={`${personsUsingTransport} usan transporte`}
+          label="Personas activas"
+          value={stats.persons}
+          hint={`${stats.usesTransport} usan transporte`}
         />
         <StatCard
           label="Vehículos disponibles"
-          value={capacity.vehiclesAvailable}
-          hint={`Capacidad total ${capacity.totalAvailableCapacity}`}
+          value={stats.vehiclesAvailable}
+          hint={`Capacidad ${stats.totalCapacity}`}
         />
         <StatCard
-          label="Mín. teórico vehículos"
-          value={
-            Number.isFinite(capacity.vehiclesRequiredTheoreticalMin)
-              ? capacity.vehiclesRequiredTheoreticalMin
-              : "—"
-          }
-          hint="No equivale a vehículos físicos necesarios"
+          label="Operaciones"
+          value={stats.operations}
+          hint={`${stats.openOperations} abiertas`}
         />
         <StatCard
-          label="Asignaciones habituales"
-          value={demoStore.habitualAssignments.length}
-          hint="Independientes de cada operación"
+          label="Excepciones / incidencias"
+          value={`${stats.exceptions} / ${stats.incidents}`}
+          hint={`${stats.importBatches} lotes importados`}
         />
       </div>
 
       <section className="mt-8 rounded-lg border border-slate-200 bg-white p-5">
         <h3 className="text-sm font-semibold text-slate-900">
-          Fases del roadmap
+          Actividad reciente
         </h3>
-        <ol className="mt-3 list-decimal space-y-1 pl-5 text-sm text-slate-700">
-          <li>Modelo de datos y configuración (actual)</li>
-          <li>Personas y asignaciones habituales</li>
-          <li>Geografía y flota</li>
-          <li>Importación de nóminas</li>
-          <li>Motor de identificación y asignación</li>
-          <li>Planificación y capacidad</li>
-          <li>Generación de nóminas</li>
-          <li>Ejecución e historial</li>
-          <li>Reportería</li>
-          <li>Seguridad y pruebas integrales</li>
-        </ol>
+        {stats.auditRecent.length === 0 ? (
+          <p className="mt-3 text-sm text-slate-500">Sin eventos aún.</p>
+        ) : (
+          <ul className="mt-3 divide-y divide-slate-100 text-sm">
+            {stats.auditRecent.map((entry) => (
+              <li
+                key={entry.id}
+                className="flex items-center justify-between py-2"
+              >
+                <span>
+                  <span className="font-medium">{entry.action}</span>{" "}
+                  <span className="text-slate-500">{entry.entityType}</span>
+                </span>
+                <span className="text-xs text-slate-400">
+                  {new Date(entry.createdAt).toLocaleString("es-CL")}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
     </div>
   );

@@ -15,7 +15,9 @@ export const personDraftSchema = z.object({
     TransportCondition.PendingValidation,
   ),
   phone: z.string().trim().nullable().optional(),
-  email: z.string().trim().email().nullable().optional().or(z.literal("")),
+  email: z
+    .union([z.string().trim().email(), z.literal(""), z.null()])
+    .optional(),
   notes: z.string().nullable().optional(),
 });
 

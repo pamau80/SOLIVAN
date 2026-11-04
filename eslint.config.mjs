@@ -12,7 +12,14 @@ const eslintConfig = [
       "node_modules/**",
       "next-env.d.ts",
       "coverage/**",
+      ".data/**",
     ],
+  },
+  {
+    rules: {
+      // Fetch async en mount es patrón válido en páginas cliente de esta app.
+      "react-hooks/set-state-in-effect": "off",
+    },
   },
 ];
 
