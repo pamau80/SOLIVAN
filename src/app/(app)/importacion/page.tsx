@@ -136,14 +136,47 @@ export default function ImportacionPage() {
       {message ? <div className="mb-4"><Alert tone="success">{message}</Alert></div> : null}
 
       <div className="rounded-lg border bg-white p-4">
-        <input
-          type="file"
-          accept=".csv,.xlsx,.xls"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) void onFile(file);
-          }}
-        />
+        <div className="flex flex-wrap items-center gap-3">
+          <input
+            type="file"
+            accept=".csv,.xlsx,.xls"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) void onFile(file);
+            }}
+          />
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => {
+              void (async () => {
+                setError(null);
+                try {
+                  const res = await fetch("/sample-nomina.csv");
+                  const blob = await res.blob();
+                  const file = new File([blob], "sample-nomina.csv", {
+                    type: "text/csv",
+                  });
+                  await onFile(file);
+                  setMessage("Ejemplo cargado · columnas mapeadas automáticamente");
+                } catch (err) {
+                  setError(
+                    err instanceof Error ? err.message : "No se pudo cargar el ejemplo",
+                  );
+                }
+              })();
+            }}
+          >
+            Cargar ejemplo CSV
+          </Button>
+          <a
+            className="text-sm text-slate-600 underline"
+            href="/sample-nomina.csv"
+            download
+          >
+            Descargar plantilla
+          </a>
+        </div>
         {filename ? (
           <p className="mt-2 text-sm text-slate-600">
             Archivo: <strong>{filename}</strong> · {rows.length} filas

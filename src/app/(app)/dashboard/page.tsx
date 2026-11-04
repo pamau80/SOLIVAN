@@ -52,13 +52,16 @@ export default function DashboardPage() {
     <div>
       <PageHeader
         title="Dashboard operacional"
-        description="Indicadores vivos del ciclo de transporte. Datos en modo local hasta conectar Supabase."
+        description="Indicadores vivos del ciclo de transporte (catálogo + operaciones)."
       />
 
       <div className="mb-6">
-        <Alert tone="info">
+        <Alert tone={data.mode === "supabase" ? "success" : "info"}>
           Runtime <strong>{data.mode}</strong> · rol sesión{" "}
           <strong>{data.session.role}</strong>
+          {data.mode === "local"
+            ? " · sin variables Supabase (store local)"
+            : " · lecturas/escrituras vía Postgres"}
         </Alert>
       </div>
 

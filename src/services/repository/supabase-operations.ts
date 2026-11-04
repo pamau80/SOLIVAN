@@ -36,6 +36,7 @@ import {
   mapVehicle,
   personToRow,
 } from "./mappers";
+import { supabaseAudit } from "./supabase-audit";
 
 async function client() {
   return createClient();
@@ -355,6 +356,11 @@ export async function supabaseCommitImport(input: {
     if (rowsError) throw new Error(rowsError.message);
   }
 
+  await supabaseAudit("import.commit", "import_batch", batchId, {
+    filename: input.filename,
+    rowCount: preview.rowCount,
+  });
+
   return {
     id: batchId,
     sourceFilename: input.filename,
@@ -557,6 +563,13 @@ export async function supabaseCreatePlannedOperation(input: {
     confirmedAt: null,
   };
 
+  await supabaseAudit("operation.plan", "operation", operationId, {
+    date: input.date,
+    shiftCode: input.shiftCode,
+    trips: plan.trips.length,
+    unassigned: plan.unassignedExternalIds.length,
+  });
+
   return { operation, plan };
 }
 
@@ -573,6 +586,7 @@ export async function supabaseConfirmOperation(operationId: string) {
     .select("*")
     .single();
   if (error) throw new Error(error.message);
+  await supabaseAudit("operation.confirm", "operation", operationId);
   return mapOperation(data as Record<string, unknown>);
 }
 
@@ -591,6 +605,9 @@ export async function supabaseUpdatePassengerExecution(input: {
     .select("*")
     .single();
   if (error) throw new Error(error.message);
+  await supabaseAudit("execution.update", "operation_passenger", input.operationPassengerId, {
+    status: input.status,
+  });
   return mapPassenger(data as Record<string, unknown>);
 }
 
@@ -618,6 +635,9 @@ export async function supabaseRegisterIncident(input: {
     .select("*")
     .single();
   if (error) throw new Error(error.message);
+  await supabaseAudit("incident.create", "incident", String(data.id), {
+    category: input.category,
+  });
   return mapIncident(data as Record<string, unknown>);
 }
 
@@ -721,12 +741,15 @@ export async function supabaseCreateException(input: {
     .select("*")
     .single();
   if (error) throw new Error(error.message);
+  await supabaseAudit("exception.create", "assignment_exception", String(data.id), {
+    reason: input.reason,
+  });
   return mapException(data as Record<string, unknown>);
 }
 
 export async function supabaseDashboardStats() {
   const supabase = await client();
-  const [persons, vehicles, operations, exceptions, incidents, imports] =
+  const [persons, vehicles, operations, exceptions, incidents, imports, audit] =
     await Promise.all([
       supabase
         .from("persons")
@@ -740,6 +763,11 @@ export async function supabaseDashboardStats() {
       supabase.from("assignment_exceptions").select("id", { count: "exact" }),
       supabase.from("incidents").select("id", { count: "exact" }),
       supabase.from("import_batches").select("id", { count: "exact" }),
+      supabase
+        .from("audit_log")
+        .select("id, action, entity_type, created_at")
+        .order("created_at", { ascending: false })
+        .limit(8),
     ]);
 
   if (persons.error) throw new Error(persons.error.message);
@@ -767,7 +795,12 @@ export async function supabaseDashboardStats() {
     importBatches: imports.count ?? imports.data?.length ?? 0,
     exceptions: exceptions.count ?? exceptions.data?.length ?? 0,
     incidents: incidents.count ?? incidents.data?.length ?? 0,
-    auditRecent: [] as unknown[],
+    auditRecent: (audit.data ?? []).map((row) => ({
+      id: String(row.id),
+      action: String(row.action),
+      entityType: String(row.entity_type),
+      createdAt: String(row.created_at),
+    })),
   };
 }
 

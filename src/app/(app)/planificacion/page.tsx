@@ -151,6 +151,27 @@ export default function PlanificacionPage() {
             />
           </div>
 
+          {result.plan.capacity.capacityDeficit > 0 ||
+          result.plan.unassignedExternalIds.length > 0 ? (
+            <div className="mt-4">
+              <Alert tone="error">
+                Cupo insuficiente o pasajeros sin viaje: déficit{" "}
+                {result.plan.capacity.capacityDeficit}, sin asignar{" "}
+                {result.plan.unassignedExternalIds.length}
+                {result.plan.unassignedExternalIds.length
+                  ? ` (${result.plan.unassignedExternalIds.join(", ")})`
+                  : ""}
+                . Ajusta flota o reduce la nómina antes de confirmar.
+              </Alert>
+            </div>
+          ) : (
+            <div className="mt-4">
+              <Alert tone="success">
+                Capacidad cubierta: todos los elegibles tienen asiento planificado.
+              </Alert>
+            </div>
+          )}
+
           {result.plan.warnings.length ? (
             <div className="mt-4 space-y-2">
               {result.plan.warnings.map((warning) => (
