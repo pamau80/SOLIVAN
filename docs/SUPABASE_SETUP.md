@@ -17,6 +17,7 @@ En el SQL Editor (o CLI `supabase db push`) aplica en orden:
 
 1. `supabase/migrations/20261104120000_init_schema.sql`
 2. `supabase/migrations/20261104140000_rls_write_policies.sql`
+3. `supabase/migrations/20261104150000_profile_on_signup.sql`
 
 ## 3. Auth
 

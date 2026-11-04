@@ -5,12 +5,13 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
 import { apiFetch } from "@/lib/client-api";
-import type { Commune, Sector, Zone } from "@/domain/types";
+import type { Address, Commune, Sector, Zone } from "@/domain/types";
 
 type Payload = {
   communes: Commune[];
   zones: Zone[];
   sectors: Sector[];
+  addresses: Address[];
 };
 
 export default function GeografiaPage() {
@@ -27,19 +28,23 @@ export default function GeografiaPage() {
     code: "",
     name: "",
   });
+  const [addressForm, setAddressForm] = useState({
+    streetLine: "",
+    reference: "",
+    zoneId: "",
+    communeId: "",
+    sectorId: "",
+  });
 
   async function load() {
     setData(await apiFetch<Payload>("/api/geography"));
   }
 
   useEffect(() => {
-    load().catch((err: Error) => setError(err.message));
+    void load().catch((err: Error) => setError(err.message));
   }, []);
 
-  async function submit(
-    event: FormEvent,
-    body: Record<string, unknown>,
-  ) {
+  async function submit(event: FormEvent, body: Record<string, unknown>) {
     event.preventDefault();
     setError(null);
     try {
@@ -61,11 +66,15 @@ export default function GeografiaPage() {
     <div>
       <PageHeader
         title="Geografía"
-        description="Comunas, zonas y sectores configurables para clasificar personas y apoyar recorridos."
+        description="Comunas, zonas, sectores y direcciones para clasificar personas y apoyar recorridos."
       />
-      {error ? <div className="mb-4"><Alert tone="error">{error}</Alert></div> : null}
+      {error ? (
+        <div className="mb-4">
+          <Alert tone="error">{error}</Alert>
+        </div>
+      ) : null}
 
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-4">
         <form
           className="space-y-2 rounded-lg border border-slate-200 bg-white p-4"
           onSubmit={(e) => submit(e, { entity: "zone", ...zoneForm })}
@@ -107,12 +116,32 @@ export default function GeografiaPage() {
           <input className="w-full rounded-md border px-3 py-2 text-sm" placeholder="Nombre" value={sectorForm.name} onChange={(e) => setSectorForm({ ...sectorForm, name: e.target.value })} required />
           <Button type="submit">Guardar sector</Button>
         </form>
+
+        <form
+          className="space-y-2 rounded-lg border border-slate-200 bg-white p-4"
+          onSubmit={(e) =>
+            submit(e, {
+              entity: "address",
+              streetLine: addressForm.streetLine,
+              reference: addressForm.reference || null,
+              zoneId: addressForm.zoneId || data?.zones[0]?.id || null,
+              communeId: addressForm.communeId || data?.communes[0]?.id || null,
+              sectorId: addressForm.sectorId || data?.sectors[0]?.id || null,
+            })
+          }
+        >
+          <h3 className="text-sm font-semibold">Nueva dirección</h3>
+          <input className="w-full rounded-md border px-3 py-2 text-sm" placeholder="Calle y número" value={addressForm.streetLine} onChange={(e) => setAddressForm({ ...addressForm, streetLine: e.target.value })} required />
+          <input className="w-full rounded-md border px-3 py-2 text-sm" placeholder="Referencia" value={addressForm.reference} onChange={(e) => setAddressForm({ ...addressForm, reference: e.target.value })} />
+          <Button type="submit">Guardar dirección</Button>
+        </form>
       </div>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-3">
+      <div className="mt-6 grid gap-4 lg:grid-cols-2 xl:grid-cols-4">
         <List title="Zonas" items={(data?.zones ?? []).map((z) => `${z.code} · ${z.name}`)} />
         <List title="Comunas" items={(data?.communes ?? []).map((c) => `${c.name}${c.region ? ` (${c.region})` : ""}`)} />
         <List title="Sectores" items={(data?.sectors ?? []).map((s) => `${s.code} · ${s.name}`)} />
+        <List title="Direcciones" items={(data?.addresses ?? []).map((a) => `${a.streetLine}${a.reference ? ` (${a.reference})` : ""}`)} />
       </div>
     </div>
   );
@@ -126,6 +155,7 @@ function List({ title, items }: { title: string; items: string[] }) {
         {items.map((item) => (
           <li key={item}>{item}</li>
         ))}
+        {items.length === 0 ? <li className="text-slate-400">Sin registros</li> : null}
       </ul>
     </section>
   );

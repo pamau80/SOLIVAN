@@ -27,6 +27,18 @@ export async function POST(request: Request) {
         throw new Error(error?.message || "Credenciales inválidas");
       }
 
+      const { resolveProfileRole } = await import(
+        "@/services/catalog-facade"
+      );
+      const profileRole = await resolveProfileRole(data.user.id);
+      const role =
+        profileRole === "admin" ||
+        profileRole === "planner" ||
+        profileRole === "operator" ||
+        profileRole === "viewer"
+          ? profileRole
+          : "planner";
+
       const token = await createSessionToken({
         userId: data.user.id,
         email: data.user.email ?? body.email,
@@ -34,7 +46,7 @@ export async function POST(request: Request) {
           (data.user.user_metadata?.full_name as string | undefined) ??
           data.user.email ??
           body.email,
-        role: "planner",
+        role,
         mode: "supabase",
       });
 
@@ -42,6 +54,7 @@ export async function POST(request: Request) {
         user: {
           id: data.user.id,
           email: data.user.email,
+          role,
           mode: "supabase",
         },
       });

@@ -47,6 +47,7 @@ Producción Supabase: ver `docs/SUPABASE_SETUP.md`.
 | `/planificacion` | Motor de cupos y viajes |
 | `/nominas` | Visualización / Excel / CSV / impresión |
 | `/ejecucion` | Estados, excepciones e incidencias |
+| `/reportes` | Historial operacional y ocupación |
 | `/admin` | Roles de sesión y reset demo |
 
 Archivo de ejemplo: `public/sample-nomina.csv`.

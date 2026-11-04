@@ -49,7 +49,7 @@ Dos operadores con los mismos datos y parámetros deben obtener el mismo resulta
 | H | Nóminas operativas | Vista/CSV/XLSX/print |
 | I | Control de ejecución | Estados + incidencias |
 | J | Historial | Snapshots + excepciones + audit |
-| K | Reportería | Dashboard operacional |
+| K | Reportería | Dashboard + `/reportes` historial |
 | L | Administración | Roles sesión + reset demo |
 
 ### Capas de código

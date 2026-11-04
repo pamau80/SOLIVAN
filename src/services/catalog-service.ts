@@ -1,5 +1,6 @@
 import { TransportCondition, VehicleStatus } from "@/domain/types";
 import type {
+  Address,
   Commune,
   HabitualAssignment,
   Person,
@@ -310,4 +311,58 @@ export function getDashboardStats() {
     incidents: db.incidents.length,
     auditRecent: db.auditLog.slice(0, 8),
   };
+}
+
+export function upsertAddress(input: {
+  id?: string;
+  streetLine: string;
+  reference?: string | null;
+  communeId?: string | null;
+  sectorId?: string | null;
+  zoneId?: string | null;
+}): Address {
+  assertCanWrite();
+  const streetLine = input.streetLine.trim();
+  if (!streetLine) throw new Error("Dirección requerida");
+  const db = getDb();
+
+  if (input.id) {
+    const existing = db.addresses.find((a) => a.id === input.id);
+    if (!existing) throw new Error("Dirección no encontrada");
+    existing.streetLine = streetLine;
+    existing.reference = input.reference?.trim() || null;
+    existing.communeId = input.communeId ?? existing.communeId;
+    existing.sectorId = input.sectorId ?? existing.sectorId;
+    existing.zoneId = input.zoneId ?? existing.zoneId;
+    audit("address.update", "address", existing.id);
+    saveDb();
+    return existing;
+  }
+
+  const address: Address = {
+    id: newId(),
+    streetLine,
+    reference: input.reference?.trim() || null,
+    communeId: input.communeId ?? null,
+    sectorId: input.sectorId ?? null,
+    zoneId: input.zoneId ?? null,
+  };
+  db.addresses.push(address);
+  audit("address.create", "address", address.id);
+  saveDb();
+  return address;
+}
+
+export function linkPersonAddress(personId: string, addressId: string | null) {
+  assertCanWrite();
+  const db = getDb();
+  const person = db.persons.find((p) => p.id === personId);
+  if (!person) throw new Error("Persona no encontrada");
+  if (addressId && !db.addresses.some((a) => a.id === addressId)) {
+    throw new Error("Dirección no encontrada");
+  }
+  person.addressId = addressId;
+  audit("person.link_address", "person", personId, { addressId });
+  saveDb();
+  return person;
 }

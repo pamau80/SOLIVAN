@@ -5,13 +5,20 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
 import { apiFetch } from "@/lib/client-api";
-import type { HabitualAssignment, Person, Vehicle, Zone } from "@/domain/types";
+import type {
+  Address,
+  HabitualAssignment,
+  Person,
+  Vehicle,
+  Zone,
+} from "@/domain/types";
 
 type Payload = {
   persons: Person[];
   habitualAssignments: HabitualAssignment[];
   vehicles: Vehicle[];
   zones: Zone[];
+  addresses?: Address[];
 };
 
 const conditionLabel: Record<string, string> = {
@@ -87,6 +94,24 @@ export default function PersonasPage() {
     }
   }
 
+  async function linkAddress(personId: string, addressId: string) {
+    setError(null);
+    try {
+      await apiFetch("/api/persons", {
+        method: "POST",
+        body: JSON.stringify({
+          action: "linkAddress",
+          personId,
+          addressId: addressId || null,
+        }),
+      });
+      setMessage("Dirección vinculada");
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error");
+    }
+  }
+
   if (!data && !error) {
     return <p className="text-sm text-slate-600">Cargando personas…</p>;
   }
@@ -151,6 +176,7 @@ export default function PersonasPage() {
               <th className="px-4 py-3">Nombre</th>
               <th className="px-4 py-3">Condición</th>
               <th className="px-4 py-3">Habitual</th>
+              <th className="px-4 py-3">Dirección</th>
               <th className="px-4 py-3">Asignar</th>
             </tr>
           </thead>
@@ -171,6 +197,20 @@ export default function PersonasPage() {
                   </td>
                   <td className="px-4 py-3">
                     {vehicle ? `${vehicle.plate}` : "—"}
+                  </td>
+                  <td className="px-4 py-3">
+                    <select
+                      className="rounded-md border border-slate-300 px-2 py-1 text-xs"
+                      value={person.addressId ?? ""}
+                      onChange={(e) => void linkAddress(person.id, e.target.value)}
+                    >
+                      <option value="">Sin dirección</option>
+                      {(data?.addresses ?? []).map((address) => (
+                        <option key={address.id} value={address.id}>
+                          {address.streetLine}
+                        </option>
+                      ))}
+                    </select>
                   </td>
                   <td className="px-4 py-3">
                     <select

@@ -15,5 +15,6 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/planificacion", label: "Planificación", module: "F/G", phase: "5-6", enabled: true },
   { href: "/nominas", label: "Nóminas", module: "H", phase: "7", enabled: true },
   { href: "/ejecucion", label: "Ejecución", module: "I/J", phase: "8", enabled: true },
+  { href: "/reportes", label: "Reportes", module: "K", phase: "9", enabled: true },
   { href: "/admin", label: "Administración", module: "L", phase: "10", enabled: true },
 ];
