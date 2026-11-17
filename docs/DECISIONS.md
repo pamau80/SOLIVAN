@@ -41,3 +41,13 @@
 
 - **Decisión:** Cookie firmada HMAC (`solivan_session`) + middleware; login local demo o `signInWithPassword` si hay env Supabase.
 - **Motivo:** No bloquear operación sin secrets, manteniendo camino de producción con Auth/RLS.
+
+## ADR-009 — Matriz de permisos alineada a RLS
+
+- **Decisión:** `assertPermission(action)` en APIs (no solo “viewer vs write”); admin-only para setRole/resetDemo; operator limitado a ejecución/incidencias/personas.
+- **Motivo:** Paridad con policies SQL y gobernanza operacional.
+
+## ADR-010 — Seed demo fuera de migraciones productivas
+
+- **Decisión:** `supabase/seed.demo.sql` opt-in; no se aplica en el path de migraciones de prod.
+- **Motivo:** Evitar contaminación/sobrescritura de datos reales.

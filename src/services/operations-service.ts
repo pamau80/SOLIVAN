@@ -211,27 +211,34 @@ export function createPlannedOperation(input: {
   const existing = db.operations.find(
     (o) => o.operationDate === input.date && o.shiftId === shift.id,
   );
+  // Replan: limpia plan hijo y conserva exceptions/incidents del mismo operationId.
+  let operation: Operation;
   if (existing) {
     db.tripAssignments = db.tripAssignments.filter(
-      (ta) => !db.trips.some((t) => t.operationId === existing.id && t.id === ta.tripId),
+      (ta) =>
+        !db.trips.some((t) => t.operationId === existing.id && t.id === ta.tripId),
     );
     db.trips = db.trips.filter((t) => t.operationId !== existing.id);
     db.operationPassengers = db.operationPassengers.filter(
       (op) => op.operationId !== existing.id,
     );
-    db.operations = db.operations.filter((o) => o.id !== existing.id);
+    existing.status = OperationStatus.Planned;
+    existing.confirmedAt = null;
+    existing.notes = null;
+    existing.importBatchId = null;
+    operation = existing;
+  } else {
+    operation = {
+      id: newId(),
+      operationDate: input.date,
+      shiftId: shift.id,
+      status: OperationStatus.Planned,
+      importBatchId: null,
+      notes: null,
+      confirmedAt: null,
+    };
+    db.operations.unshift(operation);
   }
-
-  const operation: Operation = {
-    id: newId(),
-    operationDate: input.date,
-    shiftId: shift.id,
-    status: OperationStatus.Planned,
-    importBatchId: null,
-    notes: null,
-    confirmedAt: null,
-  };
-  db.operations.unshift(operation);
 
   const passengerByExternal = new Map<string, OperationPassenger>();
   for (const item of plan.eligible) {
@@ -256,7 +263,12 @@ export function createPlannedOperation(input: {
     passengerByExternal.set(person.externalId, opPassenger);
   }
 
+  const vehiclesById = new Map(db.vehicles.map((v) => [v.id, v]));
+  const providersById = new Map(db.providers.map((p) => [p.id, p]));
+
   for (const planned of plan.trips) {
+    const vehicle = vehiclesById.get(planned.vehicleId);
+    const provider = providersById.get(planned.providerId);
     const trip: Trip = {
       id: newId(),
       operationId: operation.id,
@@ -265,6 +277,8 @@ export function createPlannedOperation(input: {
       sequenceNumber: planned.sequenceNumber,
       plannedCapacity: planned.plannedCapacity,
       departureTime: shift.startTime,
+      vehiclePlateSnapshot: vehicle?.plate ?? null,
+      providerNameSnapshot: provider?.name ?? null,
     };
     db.trips.push(trip);
     planned.passengerExternalIds.forEach((externalId, index) => {
@@ -342,6 +356,7 @@ export function createException(input: {
       t.sequenceNumber === 1,
   );
   if (!trip) {
+    const provider = db.providers.find((p) => p.id === newVehicle.providerId);
     trip = {
       id: newId(),
       operationId: input.operationId,
@@ -350,6 +365,8 @@ export function createException(input: {
       sequenceNumber: 1,
       plannedCapacity: newVehicle.authorizedCapacity,
       departureTime: null,
+      vehiclePlateSnapshot: newVehicle.plate,
+      providerNameSnapshot: provider?.name ?? null,
     };
     db.trips.push(trip);
   }
@@ -490,8 +507,8 @@ export function buildNomina(input: {
       return tripPassengers.map((passenger, index) => ({
         fecha: detail.operation.operationDate,
         turno: detail.shift?.code ?? "",
-        proveedor: provider?.name ?? "",
-        patente: vehicle?.plate ?? "",
+        proveedor: trip.providerNameSnapshot ?? provider?.name ?? "",
+        patente: trip.vehiclePlateSnapshot ?? vehicle?.plate ?? "",
         secuencia: trip.sequenceNumber,
         orden: index + 1,
         idExterno: passenger!.externalIdSnapshot,

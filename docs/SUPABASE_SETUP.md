@@ -8,17 +8,28 @@
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=YOUR_ANON_KEY
-SOLIVAN_SESSION_SECRET=cambia-este-secreto-largo
+# Obligatorio en producción: ≥32 chars, no uses valores de ejemplo
+SOLIVAN_SESSION_SECRET=$(openssl rand -hex 32)
 ```
 
-## 2. Migraciones
+## 2. Migraciones (productivas)
 
-En el SQL Editor (o CLI `supabase db push`) aplica en orden:
+En el SQL Editor (o CLI `supabase db push`) aplica **solo** en orden:
 
 1. `supabase/migrations/20261104120000_init_schema.sql`
 2. `supabase/migrations/20261104140000_rls_write_policies.sql`
 3. `supabase/migrations/20261104150000_profile_on_signup.sql`
-4. `supabase/migrations/20261104160000_demo_seed.sql` (catálogo/turnos demo)
+4. `supabase/migrations/20261117220000_audit_rls_hardening.sql`
+
+### Seed demo (opt-in, NO producción)
+
+El catálogo demo vive en `supabase/seed.demo.sql` y **no** forma parte de la cadena productiva.
+Aplícalo solo en ambientes de prueba:
+
+```bash
+# ejemplo CLI
+psql "$DATABASE_URL" -f supabase/seed.demo.sql
+```
 
 ## 3. Auth
 
@@ -33,6 +44,12 @@ insert into public.profiles (id, email, full_name, role)
 values ('USER_UUID', 'planner@empresa.cl', 'Planificador', 'planner');
 ```
 
+Notas de seguridad:
+
+- Un usuario **no** puede auto-promoverse cambiando `profiles.role` (trigger de hardening).
+- Sin perfil válido, el login app asigna rol `viewer` (solo lectura).
+- `viewer` no lee PII de `persons` ni escribe catálogos.
+
 ## 4. Verificación
 
 ```bash
@@ -44,10 +61,10 @@ curl -s http://localhost:3000/api/health
 
 ## Notas
 
-- Sin estas variables, SOLIVAN opera en **modo local** con usuarios demo (ver pantalla `/login`).
+- Sin variables Supabase, SOLIVAN opera en **modo local** con usuarios demo (ver `/login`).
 - Las políticas RLS usan `public.has_role(...)` sobre `profiles`.
-- Domicilios/teléfonos permanecen restringidos a roles operativos.
-- La fachada `src/services/catalog-facade.ts` enruta lecturas y escrituras de catálogo (personas, habituales, flota, geografía, direcciones) a local o Supabase según `runtimeMode`.
+- Domicilios/teléfonos restringidos a roles operativos (`admin`/`planner`/`operator`).
+- La fachada `src/services/catalog-facade.ts` enruta lecturas/escrituras según `runtimeMode`.
 - La fachada `src/services/operations-facade.ts` enruta importación, planificación, ejecución, nóminas, reportes e historial.
-- El reinicio demo en `/admin` solo aplica en modo local.
-- Tras migrar, crea usuarios Auth y filas `profiles` (el seed no inserta perfiles: requieren `auth.users`).
+- El reinicio demo y el switch de rol en `/admin` solo aplican en modo local y requieren `admin`.
+- `audit_log` tiene INSERT autenticado + SELECT admin/planner.

@@ -347,6 +347,7 @@ export function audit(
 export function assertCanWrite() {
   const role = getDb().session.role;
   if (role === AppRole.Viewer) {
+    // Mantener mensaje estable; las APIs usan AuthorizationError tipado.
     throw new Error("Rol viewer: solo lectura");
   }
 }

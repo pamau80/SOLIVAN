@@ -1,5 +1,3 @@
-import { getDb } from "@/services/local/db";
-import { getAppEnv } from "@/lib/env";
 import {
   getOperationDetailFacade,
   listOperationsFacade,
@@ -31,31 +29,28 @@ export async function buildCapacityQueue(date?: string): Promise<{
     const assignedPassengerIds = new Set(
       detail.assignments.map((a) => a.operationPassengerId),
     );
-    const unassigned = detail.passengers
-      .filter((p) => !assignedPassengerIds.has(p.id) && p.requiresTransport)
+    const requiring = detail.passengers.filter((p) => p.requiresTransport);
+    const unassigned = requiring
+      .filter((p) => !assignedPassengerIds.has(p.id))
       .map((p) => p.externalIdSnapshot);
     const tripCapacity = detail.trips.reduce(
       (sum, t) => sum + t.plannedCapacity,
       0,
     );
-    const deficit = Math.max(0, detail.passengers.length - tripCapacity);
-    if (unassigned.length > 0 || deficit > 0) {
+    // Déficit operativo: demanda de transporte vs cupo planificado de viajes.
+    const capacityDeficit = Math.max(0, requiring.length - tripCapacity);
+
+    if (unassigned.length > 0 || capacityDeficit > 0) {
       items.push({
         operationId: op.id,
         date: op.operationDate,
         status: op.status,
         unassignedExternalIds: unassigned,
-        capacityDeficit: deficit,
-        passengers: detail.passengers.length,
+        capacityDeficit,
+        passengers: requiring.length,
         tripCapacity,
       });
     }
-  }
-
-  // En modo local también revisar la última planificación en memoria si no hay ops del día
-  if (getAppEnv().runtimeMode === "local" && items.length === 0) {
-    const db = getDb();
-    void db;
   }
 
   return {

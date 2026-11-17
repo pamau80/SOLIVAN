@@ -442,24 +442,57 @@ export async function supabaseCreatePlannedOperation(input: {
     .eq("operation_date", input.date)
     .eq("shift_id", shift.id)
     .maybeSingle();
-  if (existing?.id) {
-    const { error: deleteError } = await supabase
-      .from("operations")
-      .delete()
-      .eq("id", existing.id);
-    if (deleteError) throw new Error(deleteError.message);
-  }
 
-  const operationId = newId();
   const actor = await actorId();
-  const { error: opError } = await supabase.from("operations").insert({
-    id: operationId,
-    operation_date: input.date,
-    shift_id: shift.id,
-    status: OperationStatus.Planned,
-    planned_by: actor,
-  });
-  if (opError) throw new Error(opError.message);
+  let operationId: string;
+  if (existing?.id) {
+    operationId = String(existing.id);
+    // Replan sin borrar la operación: conserva exceptions/incidents (evita CASCADE).
+    const { data: oldTrips, error: oldTripsError } = await supabase
+      .from("trips")
+      .select("id")
+      .eq("operation_id", operationId);
+    if (oldTripsError) throw new Error(oldTripsError.message);
+    const oldTripIds = (oldTrips ?? []).map((t) => String(t.id));
+    if (oldTripIds.length) {
+      const { error: delAssignError } = await supabase
+        .from("trip_assignments")
+        .delete()
+        .in("trip_id", oldTripIds);
+      if (delAssignError) throw new Error(delAssignError.message);
+      const { error: delTripsError } = await supabase
+        .from("trips")
+        .delete()
+        .eq("operation_id", operationId);
+      if (delTripsError) throw new Error(delTripsError.message);
+    }
+    const { error: delPassengersError } = await supabase
+      .from("operation_passengers")
+      .delete()
+      .eq("operation_id", operationId);
+    if (delPassengersError) throw new Error(delPassengersError.message);
+    const { error: resetOpError } = await supabase
+      .from("operations")
+      .update({
+        status: OperationStatus.Planned,
+        confirmed_at: null,
+        notes: null,
+        import_batch_id: null,
+        planned_by: actor,
+      })
+      .eq("id", operationId);
+    if (resetOpError) throw new Error(resetOpError.message);
+  } else {
+    operationId = newId();
+    const { error: opError } = await supabase.from("operations").insert({
+      id: operationId,
+      operation_date: input.date,
+      shift_id: shift.id,
+      status: OperationStatus.Planned,
+      planned_by: actor,
+    });
+    if (opError) throw new Error(opError.message);
+  }
 
   const passengerByExternal = new Map<string, OperationPassenger>();
   const passengerRows = [];
@@ -508,8 +541,22 @@ export async function supabaseCreatePlannedOperation(input: {
   const assignmentRows: Array<Record<string, unknown>> = [];
   const passengerUpdates: { id: string; status: string }[] = [];
 
+  const vehiclesById = new Map(ctx.vehicles.map((v) => [v.id, v] as const));
+  const providerIds = [...new Set(plan.trips.map((t) => t.providerId))];
+  let providersById = new Map<string, string>();
+  if (providerIds.length) {
+    const { data: providerRows } = await supabase
+      .from("providers")
+      .select("id, name")
+      .in("id", providerIds);
+    providersById = new Map(
+      (providerRows ?? []).map((p) => [String(p.id), String(p.name)] as const),
+    );
+  }
+
   for (const planned of plan.trips) {
     const tripId = newId();
+    const vehicle = vehiclesById.get(planned.vehicleId);
     tripRows.push({
       id: tripId,
       operation_id: operationId,
@@ -518,6 +565,8 @@ export async function supabaseCreatePlannedOperation(input: {
       sequence_number: planned.sequenceNumber,
       planned_capacity: planned.plannedCapacity,
       departure_time: shift.startTime,
+      vehicle_plate_snapshot: vehicle?.plate ?? null,
+      provider_name_snapshot: providersById.get(planned.providerId) ?? null,
     });
     planned.passengerExternalIds.forEach((externalId, index) => {
       const passenger = passengerByExternal.get(externalId);
@@ -682,6 +731,7 @@ export async function supabaseCreateException(input: {
       t.vehicleId === newVehicle.id && t.sequenceNumber === 1,
   );
   if (!trip) {
+    const provider = detail.providers.find((p) => p.id === newVehicle.providerId);
     trip = {
       id: newId(),
       operationId: input.operationId,
@@ -690,6 +740,8 @@ export async function supabaseCreateException(input: {
       sequenceNumber: 1,
       plannedCapacity: newVehicle.authorizedCapacity,
       departureTime: null,
+      vehiclePlateSnapshot: newVehicle.plate,
+      providerNameSnapshot: provider?.name ?? null,
     };
     const { error } = await supabase.from("trips").insert({
       id: trip.id,
@@ -698,6 +750,8 @@ export async function supabaseCreateException(input: {
       provider_id: trip.providerId,
       sequence_number: trip.sequenceNumber,
       planned_capacity: trip.plannedCapacity,
+      vehicle_plate_snapshot: trip.vehiclePlateSnapshot,
+      provider_name_snapshot: trip.providerNameSnapshot,
     });
     if (error) throw new Error(error.message);
   }

@@ -1,5 +1,3 @@
-import { summarizeCapacity } from "@/domain/rules";
-import { VehicleStatus } from "@/domain/types";
 import { getDb } from "@/services/local/db";
 
 export type OperationReportRow = {
@@ -17,6 +15,14 @@ export type OperationReportRow = {
   incidents: number;
   occupancyPercent: number;
 };
+
+function occupancyFromTrips(
+  tripCapacity: number,
+  assignedCount: number,
+): number {
+  if (tripCapacity <= 0) return 0;
+  return Math.round((assignedCount / tripCapacity) * 1000) / 10;
+}
 
 export function buildOperationalReport(filters?: {
   from?: string;
@@ -56,24 +62,7 @@ export function buildOperationalReport(filters?: {
       const assignments = db.tripAssignments.filter((ta) =>
         trips.some((t) => t.id === ta.tripId),
       );
-      const assignedByVehicle = new Map<string, number>();
-      for (const trip of trips) {
-        const count = assignments.filter((a) => a.tripId === trip.id).length;
-        assignedByVehicle.set(
-          trip.vehicleId,
-          (assignedByVehicle.get(trip.vehicleId) ?? 0) + count,
-        );
-      }
-
-      const capacity = summarizeCapacity({
-        passengersScheduled: passengers.length,
-        vehicles: db.vehicles
-          .filter((v) => v.isActive && v.status === VehicleStatus.Available)
-          .map((vehicle) => ({
-            vehicle,
-            assignedPassengers: assignedByVehicle.get(vehicle.id) ?? 0,
-          })),
-      });
+      const tripCapacity = trips.reduce((sum, t) => sum + t.plannedCapacity, 0);
 
       return {
         operationId: op.id,
@@ -91,7 +80,7 @@ export function buildOperationalReport(filters?: {
         trips: trips.length,
         exceptions: db.exceptions.filter((e) => e.operationId === op.id).length,
         incidents: db.incidents.filter((i) => i.operationId === op.id).length,
-        occupancyPercent: capacity.occupancyPercent,
+        occupancyPercent: occupancyFromTrips(tripCapacity, assignments.length),
       };
     })
     .sort((a, b) => b.date.localeCompare(a.date));

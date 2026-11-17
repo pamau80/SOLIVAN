@@ -68,6 +68,10 @@ export function mapTrip(row: Record<string, unknown>): Trip {
     departureTime: row.departure_time
       ? String(row.departure_time).slice(0, 5)
       : null,
+    vehiclePlateSnapshot:
+      (row.vehicle_plate_snapshot as string | null | undefined) ?? null,
+    providerNameSnapshot:
+      (row.provider_name_snapshot as string | null | undefined) ?? null,
   };
 }
 
