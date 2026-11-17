@@ -1,5 +1,5 @@
 import { fail, ok } from "@/lib/api";
-import { assertSessionCanWrite } from "@/lib/auth/assert-write";
+import { assertPermission } from "@/lib/auth/assert-write";
 import { requireSession } from "@/lib/auth/server-session";
 import { personsPostSchema } from "@/domain/schemas/catalog";
 import {
@@ -53,13 +53,14 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const session = await requireSession();
-    assertSessionCanWrite(session);
     const body = personsPostSchema.parse(await request.json());
 
     if ("action" in body && body.action === "setHabitual") {
+      assertPermission(session, "habitual.write");
       return ok({ assignment: await setHabitualFacade(body) });
     }
     if ("action" in body && body.action === "linkAddress") {
+      assertPermission(session, "persons.write");
       return ok({
         person: await linkPersonAddressFacade(
           body.personId,
@@ -68,12 +69,15 @@ export async function POST(request: Request) {
       });
     }
     if ("action" in body && body.action === "deactivate") {
+      assertPermission(session, "persons.write");
       return ok({ person: await deactivatePersonFacade(body.personId) });
     }
     if ("action" in body && body.action === "reactivate") {
+      assertPermission(session, "persons.write");
       return ok({ person: await reactivatePersonFacade(body.personId) });
     }
 
+    assertPermission(session, "persons.write");
     return ok({ person: await upsertPersonFacade(body) });
   } catch (error) {
     return fail(error);

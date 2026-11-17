@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { getAppEnv } from "@/lib/env";
 import { getDb } from "@/services/local/db";
+import { AuthenticationError } from "./errors";
 import { parseSessionToken } from "./session-token";
 import { SESSION_COOKIE } from "./types";
 import type { SessionPayload } from "./types";
@@ -27,7 +28,7 @@ export async function readSession(): Promise<SessionPayload | null> {
 export async function requireSession(): Promise<SessionPayload> {
   const session = await readSession();
   if (!session) {
-    throw new Error("No autenticado");
+    throw new AuthenticationError("No autenticado");
   }
   return session;
 }

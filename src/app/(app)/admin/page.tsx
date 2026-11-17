@@ -129,7 +129,8 @@ export default function AdminPage() {
             ))}
           </div>
           <p className="mt-3 text-xs text-slate-500">
-            El rol viewer bloquea escrituras en API local.
+            Cambio de rol y reset demo: solo <strong>admin</strong> en modo local.
+            Lectura/export de auditoría: admin o planner. Operator no planifica ni edita flota/geografía.
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
             <Button type="button" variant="danger" onClick={() => void resetDemo()}>

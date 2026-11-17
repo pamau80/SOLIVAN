@@ -7,6 +7,10 @@ export async function GET() {
   try {
     const session = await readSession();
     const env = getAppEnv();
+    const exposeDemoSecrets =
+      env.runtimeMode === "local" &&
+      process.env.SOLIVAN_EXPOSE_DEMO_USERS === "true";
+
     return ok({
       authenticated: Boolean(session),
       session,
@@ -16,7 +20,7 @@ export async function GET() {
           ? LOCAL_DEMO_USERS.map((u) => ({
               email: u.email,
               role: u.role,
-              hintPassword: u.password,
+              ...(exposeDemoSecrets ? { hintPassword: u.password } : {}),
             }))
           : [],
     });

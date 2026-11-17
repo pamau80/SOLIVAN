@@ -1,8 +1,6 @@
-import { AppRole } from "@/domain/types";
-import type { SessionPayload } from "@/lib/auth/types";
-
-export function assertSessionCanWrite(session: SessionPayload) {
-  if (session.role === AppRole.Viewer) {
-    throw new Error("Rol viewer: solo lectura");
-  }
-}
+export {
+  assertSessionCanWrite,
+  assertPermission,
+  roleHasPermission,
+} from "@/lib/auth/permissions";
+export type { PermissionAction } from "@/lib/auth/permissions";

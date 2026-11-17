@@ -1,8 +1,31 @@
 import type { SessionPayload } from "./types";
 import { SESSION_TTL_SECONDS } from "./types";
 
-function getSecret() {
-  return process.env.SOLIVAN_SESSION_SECRET || "solivan-local-dev-secret";
+const WEAK_SECRETS = new Set([
+  "",
+  "cambia-este-secreto-largo",
+  "solivan-local-dev-secret",
+  "ci-test-secret-not-for-production",
+]);
+
+function getSecret(): string {
+  const secret = process.env.SOLIVAN_SESSION_SECRET?.trim() ?? "";
+  const isProd = process.env.NODE_ENV === "production";
+
+  if (isProd) {
+    if (!secret || WEAK_SECRETS.has(secret) || secret.length < 32) {
+      throw new Error(
+        "SOLIVAN_SESSION_SECRET debe ser un secreto fuerte (≥32 chars) en producción",
+      );
+    }
+    return secret;
+  }
+
+  if (!secret || WEAK_SECRETS.has(secret)) {
+    // Demo/dev: secreto derivado estable, nunca el literal documentado.
+    return "solivan-dev-only-secret-do-not-use-in-prod-32b";
+  }
+  return secret;
 }
 
 function toBase64Url(bytes: ArrayBuffer | Uint8Array): string {
@@ -23,14 +46,18 @@ function fromBase64Url(value: string): Uint8Array {
   return bytes;
 }
 
-async function sign(body: string): Promise<string> {
-  const key = await crypto.subtle.importKey(
+async function importHmacKey(): Promise<CryptoKey> {
+  return crypto.subtle.importKey(
     "raw",
     new TextEncoder().encode(getSecret()),
     { name: "HMAC", hash: "SHA-256" },
     false,
-    ["sign"],
+    ["sign", "verify"],
   );
+}
+
+async function sign(body: string): Promise<string> {
+  const key = await importHmacKey();
   const signature = await crypto.subtle.sign(
     "HMAC",
     key,
@@ -39,9 +66,22 @@ async function sign(body: string): Promise<string> {
   return toBase64Url(signature);
 }
 
-async function verify(body: string, signature: string): Promise<boolean> {
-  const expected = await sign(body);
-  return expected === signature;
+async function verifySignature(body: string, signature: string): Promise<boolean> {
+  try {
+    const key = await importHmacKey();
+    const raw = fromBase64Url(signature);
+    // Copia a ArrayBuffer propio para tipado BufferSource estricto de TS.
+    const sigBytes = new Uint8Array(raw);
+    // crypto.subtle.verify es constant-time en runtimes modernos.
+    return crypto.subtle.verify(
+      "HMAC",
+      key,
+      sigBytes,
+      new TextEncoder().encode(body),
+    );
+  } catch {
+    return false;
+  }
 }
 
 export async function createSessionToken(
@@ -63,7 +103,7 @@ export async function parseSessionToken(
   if (!token) return null;
   const [body, signature] = token.split(".");
   if (!body || !signature) return null;
-  if (!(await verify(body, signature))) return null;
+  if (!(await verifySignature(body, signature))) return null;
   try {
     const json = new TextDecoder().decode(fromBase64Url(body));
     const payload = JSON.parse(json) as SessionPayload;

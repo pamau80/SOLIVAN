@@ -1,5 +1,5 @@
 import { fail, ok } from "@/lib/api";
-import { assertSessionCanWrite } from "@/lib/auth/assert-write";
+import { assertPermission } from "@/lib/auth/assert-write";
 import { requireSession } from "@/lib/auth/server-session";
 import { fleetPostSchema } from "@/domain/schemas/catalog";
 import {
@@ -23,7 +23,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const session = await requireSession();
-    assertSessionCanWrite(session);
+    assertPermission(session, "catalog.write");
     const body = fleetPostSchema.parse(await request.json());
 
     if ("action" in body) {

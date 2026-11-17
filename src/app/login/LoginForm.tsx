@@ -5,16 +5,17 @@ import { useSearchParams } from "next/navigation";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { apiFetch } from "@/lib/client-api";
+import { safeInternalPath } from "@/lib/safe-redirect";
 
 type MePayload = {
   authenticated: boolean;
   runtimeMode: "local" | "supabase";
-  demoUsers: Array<{ email: string; role: string; hintPassword: string }>;
+  demoUsers: Array<{ email: string; role: string; hintPassword?: string }>;
 };
 
 export function LoginForm() {
   const search = useSearchParams();
-  const nextPath = search.get("next") || "/dashboard";
+  const nextPath = safeInternalPath(search.get("next"), "/dashboard");
   const [email, setEmail] = useState("planificador@solivan.local");
   const [password, setPassword] = useState("solivan-demo");
   const [error, setError] = useState<string | null>(null);
@@ -110,7 +111,7 @@ export function LoginForm() {
                     className="text-left hover:underline"
                     onClick={() => {
                       setEmail(user.email);
-                      setPassword(user.hintPassword);
+                      if (user.hintPassword) setPassword(user.hintPassword);
                     }}
                   >
                     {user.role}: {user.email}

@@ -1,5 +1,5 @@
 import { fail, ok } from "@/lib/api";
-import { assertSessionCanWrite } from "@/lib/auth/assert-write";
+import { assertPermission } from "@/lib/auth/assert-write";
 import { requireSession } from "@/lib/auth/server-session";
 import { operationsPostSchema } from "@/domain/schemas/operations";
 import { getAppEnv } from "@/lib/env";
@@ -33,22 +33,26 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const session = await requireSession();
-    assertSessionCanWrite(session);
     const body = operationsPostSchema.parse(await request.json());
     switch (body.action) {
       case "plan":
+        assertPermission(session, "operations.plan");
         return ok(await planOperationFacade(body));
       case "confirm":
+        assertPermission(session, "operations.confirm");
         return ok({
           operation: await confirmOperationFacade(body.operationId),
         });
       case "exception":
+        assertPermission(session, "operations.exception");
         return ok({ exception: await createExceptionFacade(body) });
       case "execution":
+        assertPermission(session, "operations.execution");
         return ok({
           passenger: await updatePassengerExecutionFacade(body),
         });
       case "incident":
+        assertPermission(session, "operations.incident");
         return ok({ incident: await registerIncidentFacade(body) });
       default:
         throw new Error("Acción de operación no soportada");

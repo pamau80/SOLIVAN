@@ -37,7 +37,7 @@ export async function POST(request: Request) {
         profileRole === "operator" ||
         profileRole === "viewer"
           ? profileRole
-          : "planner";
+          : "viewer";
 
       const token = await createSessionToken({
         userId: data.user.id,
