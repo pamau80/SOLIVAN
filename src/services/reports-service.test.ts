@@ -18,7 +18,9 @@ describe("buildOperationalReport", () => {
     expect(report.totals.operations).toBe(1);
     expect(report.rows[0]?.passengers).toBeGreaterThan(0);
     expect(report.rows[0]?.trips).toBeGreaterThan(0);
-    expect(report.totals.avgOccupancyPercent).toBeGreaterThanOrEqual(0);
+    // Ocupación sobre capacidad de viajes (no flota completa).
+    expect(report.rows[0]?.occupancyPercent).toBeGreaterThan(5);
+    expect(report.totals.avgOccupancyPercent).toBeGreaterThan(5);
   });
 
   it("filtra por turno", () => {

@@ -133,8 +133,8 @@ export async function buildNominaFacade(input: {
         return tripPassengers.map((passenger, index) => ({
           fecha: detail.operation.operationDate,
           turno: detail.shift?.code ?? "",
-          proveedor: provider?.name ?? "",
-          patente: vehicle?.plate ?? "",
+          proveedor: trip.providerNameSnapshot ?? provider?.name ?? "",
+          patente: trip.vehiclePlateSnapshot ?? vehicle?.plate ?? "",
           secuencia: trip.sequenceNumber,
           orden: index + 1,
           idExterno: passenger!.externalIdSnapshot,

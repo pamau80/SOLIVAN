@@ -125,7 +125,9 @@ describe("planOperation", () => {
     expect(result.trips[0].passengerExternalIds).toHaveLength(2);
     expect(result.unassignedExternalIds).toEqual(["TRB-3"]);
     expect(result.warnings.some((w) => w.includes("pendientes"))).toBe(true);
+    expect(result.warnings.some((w) => w.includes("sin sobrecupo"))).toBe(true);
     expect(result.capacity.unassignedPassengers).toBeGreaterThan(0);
+    expect(result.incompleteExternalIds).toEqual([]);
   });
 });
 

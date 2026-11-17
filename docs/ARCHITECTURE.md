@@ -103,4 +103,11 @@ Fases 1–10 operativas en modo local con autenticación, APIs protegidas y cicl
 
 ## Próximo paso recomendado
 
-Conectar proyecto Supabase real (`docs/SUPABASE_SETUP.md`), migrar datos demo y endurecer auth (MFA, recuperación de clave, service role solo en server).
+Conectar proyecto Supabase real (`docs/SUPABASE_SETUP.md`), aplicar migraciones productivas (sin `seed.demo.sql` en prod), crear perfiles Auth y validar RLS con tests de integración. MFA y recuperación de clave quedan para endurecimiento posterior.
+
+## Remediación post-auditoría (2026-11-17)
+
+- Matriz de permisos API alineada a RLS (`src/lib/auth/permissions.ts`)
+- Hardening SQL: `20261117220000_audit_rls_hardening.sql`
+- Seed demo opt-in: `supabase/seed.demo.sql`
+- Open-redirect, secret de sesión, admin leak, ocupación por viajes, replan sin CASCADE de historial

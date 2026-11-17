@@ -118,6 +118,9 @@ export interface Trip {
   sequenceNumber: number;
   plannedCapacity: number;
   departureTime: string | null;
+  /** Congelado al planificar (ADR-004) */
+  vehiclePlateSnapshot?: string | null;
+  providerNameSnapshot?: string | null;
 }
 
 export interface Profile {

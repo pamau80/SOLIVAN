@@ -33,7 +33,10 @@ Usuarios demo (modo local):
 | operator | `operador@solivan.local` | `solivan-oper` |
 | viewer | `visor@solivan.local` | `solivan-view` |
 
-Producción Supabase: ver `docs/SUPABASE_SETUP.md`.
+Permisos (API alineada a RLS): `viewer` solo lectura; `operator` ejecución/incidencias/personas; `planner` planifica/catálogos; `admin` además setRole/resetDemo.  
+Para rellenar claves en `/login` automáticamente: `SOLIVAN_EXPOSE_DEMO_USERS=true` (solo entornos de confianza).
+
+Producción Supabase: ver `docs/SUPABASE_SETUP.md` (seed demo opt-in, no en migraciones).
 
 ## Módulos disponibles
 

@@ -1,5 +1,5 @@
 import type { HabitualAssignment, Person, Vehicle } from "@/domain/types";
-import { VehicleStatus } from "@/domain/types";
+import { TransportCondition, VehicleStatus } from "@/domain/types";
 import {
   canAssignPassenger,
   summarizeCapacity,
@@ -38,6 +38,8 @@ export interface PlanOperationResult {
   groups: PassengerGroup[];
   trips: PlannedTrip[];
   unassignedExternalIds: string[];
+  /** Usa transporte pero incompletos para plan (p.ej. sin habitual). */
+  incompleteExternalIds: string[];
   capacity: CapacitySummary;
   warnings: string[];
 }
@@ -75,6 +77,14 @@ export function planOperation(input: PlanOperationInput): PlanOperationResult {
   });
 
   const eligible = filterEligibleForPlanning(identified);
+  const incompleteExternalIds = identified
+    .filter(
+      (item) =>
+        item.transportCondition === TransportCondition.UsesTransport &&
+        !eligible.some((e) => e.externalId === item.externalId) &&
+        item.externalId,
+    )
+    .map((item) => item.externalId);
 
   const groups = groupForPlanning({
     date: input.date,
@@ -142,7 +152,7 @@ export function planOperation(input: PlanOperationInput): PlanOperationResult {
 
     if (passengerExternalIds.length < group.members.length) {
       warnings.push(
-        `Vehículo ${vehicle.id}: cupo ${vehicle.authorizedCapacity} excedido; ${group.members.length - passengerExternalIds.length} pasajero(s) pendientes`,
+        `Vehículo ${vehicle.id}: cupo ${vehicle.authorizedCapacity} alcanzado; ${group.members.length - passengerExternalIds.length} pasajero(s) pendientes sin sobrecupo`,
       );
     }
 
@@ -172,12 +182,19 @@ export function planOperation(input: PlanOperationInput): PlanOperationResult {
     vehicles: capacityVehicles,
   });
 
+  if (incompleteExternalIds.length > 0) {
+    warnings.push(
+      `${incompleteExternalIds.length} persona(s) con transporte incompletas para planificar (p.ej. sin habitual)`,
+    );
+  }
+
   return {
     identified,
     eligible,
     groups,
     trips,
     unassignedExternalIds,
+    incompleteExternalIds,
     capacity,
     warnings,
   };

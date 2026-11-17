@@ -1,8 +1,8 @@
 import { fail, ok } from "@/lib/api";
+import { assertPermission } from "@/lib/auth/assert-write";
 import { requireSession } from "@/lib/auth/server-session";
 import { createSessionToken } from "@/lib/auth/session-token";
 import { SESSION_COOKIE, SESSION_TTL_SECONDS } from "@/lib/auth/types";
-import { AppRole } from "@/domain/types";
 import { getAppEnv } from "@/lib/env";
 import { getDb, resetDb } from "@/services/local/db";
 import { setSessionRole } from "@/services/operations-service";
@@ -10,6 +10,7 @@ import { setSessionRole } from "@/services/operations-service";
 export async function GET() {
   try {
     const session = await requireSession();
+    assertPermission(session, "admin.read");
     const db = getDb();
     const env = getAppEnv();
     return ok({
@@ -37,8 +38,11 @@ export async function POST(request: Request) {
     const body = await request.json();
 
     if (body?.action === "setRole") {
-      if (current.role !== AppRole.Admin && current.role !== AppRole.Planner) {
-        throw new Error("Solo admin/planner pueden cambiar el rol de demo");
+      assertPermission(current, "admin.setRole");
+      if (getAppEnv().runtimeMode === "supabase") {
+        throw new Error(
+          "Cambio de rol demo solo disponible en modo local (sin Supabase)",
+        );
       }
       const session = setSessionRole(body.role);
       const profile = getDb().profiles.find((p) => p.id === session.userId);
@@ -61,9 +65,7 @@ export async function POST(request: Request) {
     }
 
     if (body?.action === "resetDemo") {
-      if (current.role !== AppRole.Admin && current.role !== AppRole.Planner) {
-        throw new Error("Solo admin/planner pueden reiniciar datos demo");
-      }
+      assertPermission(current, "admin.resetDemo");
       if (getAppEnv().runtimeMode === "supabase") {
         throw new Error(
           "Reinicio demo solo disponible en modo local (sin Supabase)",
@@ -73,6 +75,7 @@ export async function POST(request: Request) {
     }
 
     if (body?.action === "exportAudit") {
+      assertPermission(current, "admin.exportAudit");
       const rows = getDb().auditLog.map((entry) => ({
         id: entry.id,
         action: entry.action,

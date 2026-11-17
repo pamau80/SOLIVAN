@@ -1,5 +1,5 @@
 import { fail, ok } from "@/lib/api";
-import { assertSessionCanWrite } from "@/lib/auth/assert-write";
+import { assertPermission } from "@/lib/auth/assert-write";
 import { requireSession } from "@/lib/auth/server-session";
 import { importPostSchema } from "@/domain/schemas/operations";
 import { getAppEnv } from "@/lib/env";
@@ -24,9 +24,10 @@ export async function POST(request: Request) {
     const session = await requireSession();
     const body = importPostSchema.parse(await request.json());
     if (body.action === "preview") {
+      assertPermission(session, "import.write");
       return ok(await previewImportFacade(body));
     }
-    assertSessionCanWrite(session);
+    assertPermission(session, "import.write");
     return ok({ batch: await commitImportFacade(body) });
   } catch (error) {
     return fail(error);
