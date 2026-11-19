@@ -3,6 +3,7 @@ import { readSession } from "@/lib/auth/server-session";
 import {
   isLocalAuthConfigured,
   listExposedLocalUsers,
+  usesSampleLocalUsers,
 } from "@/lib/auth/local-users";
 import { getAppEnv } from "@/lib/env";
 
@@ -17,7 +18,8 @@ export async function GET() {
       runtimeMode: env.runtimeMode,
       localAuthConfigured:
         env.runtimeMode === "local" ? isLocalAuthConfigured() : true,
-      // Nunca incluye passwords. Solo emails/roles con opt-in fuera de producción.
+      usingSampleUsers:
+        env.runtimeMode === "local" ? usesSampleLocalUsers() : false,
       demoUsers:
         env.runtimeMode === "local" ? listExposedLocalUsers() : [],
     });

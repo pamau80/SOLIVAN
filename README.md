@@ -16,17 +16,26 @@ Objetivo: reemplazar el proceso basado en Excel por un sistema centralizado, est
 
 ```bash
 npm install
-cp .env.example .env.local
-# Define SOLIVAN_SESSION_SECRET (≥32 chars) y, en modo local, SOLIVAN_LOCAL_USERS (JSON)
+cp .env.example .env.local   # opcional
 npm run dev
 ```
 
-Sin variables de Supabase, la aplicación arranca en **modo local** con datos demo persistidos en `.data/`. El login local **exige** `SOLIVAN_LOCAL_USERS` en el entorno; no hay claves embebidas en el código.
+Sin variables de Supabase, la aplicación arranca en **modo local** con datos demo en `.data/`.
 
 Abre `http://localhost:3000/login`.
 
-Permisos (API alineada a RLS): `viewer` solo lectura; `operator` ejecución/incidencias/personas; `planner` planifica/catálogos; `admin` además setRole/resetDemo.  
-Opcional fuera de producción: `SOLIVAN_EXPOSE_DEMO_USERS=true` lista emails (nunca passwords) en `/login`.
+### Acceso demo (modo local sin env)
+
+| Correo | Contraseña | Rol |
+|--------|------------|-----|
+| `admin@solivan.local` | `solivan-admin` | admin |
+| `planificador@solivan.local` | `solivan-demo` | planner |
+| `operador@solivan.local` | `solivan-oper` | operator |
+| `visor@solivan.local` | `solivan-view` | viewer |
+
+Opcional: `SOLIVAN_LOCAL_USERS` (JSON) reemplaza las cuentas de muestra; `SOLIVAN_SESSION_SECRET` (≥32) endurece la cookie.
+
+Permisos (API alineada a RLS): `viewer` solo lectura; `operator` ejecución/incidencias/personas; `planner` planifica/catálogos; `admin` además setRole/resetDemo.
 
 Producción Supabase: ver `docs/SUPABASE_SETUP.md` (seed demo opt-in, no en migraciones).
 

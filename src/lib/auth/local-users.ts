@@ -11,20 +11,44 @@ export type LocalAuthUser = {
 
 const ROLE_VALUES = new Set<string>(Object.values(AppRole));
 
+/** Cuentas de muestra solo cuando no hay SOLIVAN_LOCAL_USERS. */
+export const SAMPLE_LOCAL_USERS: LocalAuthUser[] = [
+  {
+    id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1",
+    email: "planificador@solivan.local",
+    password: "solivan-demo",
+    fullName: "Planificador Demo",
+    role: AppRole.Planner,
+  },
+  {
+    id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2",
+    email: "admin@solivan.local",
+    password: "solivan-admin",
+    fullName: "Administrador Demo",
+    role: AppRole.Admin,
+  },
+  {
+    id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3",
+    email: "operador@solivan.local",
+    password: "solivan-oper",
+    fullName: "Operador Demo",
+    role: AppRole.Operator,
+  },
+  {
+    id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa4",
+    email: "visor@solivan.local",
+    password: "solivan-view",
+    fullName: "Visor Demo",
+    role: AppRole.Viewer,
+  },
+];
+
 function stableLocalUserId(email: string): string {
   const hex = createHash("sha256").update(`solivan-local:${email}`).digest("hex");
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20, 32)}`;
 }
 
-/**
- * Usuarios de autenticación local. Solo desde `SOLIVAN_LOCAL_USERS` (JSON).
- * Sin esa variable, el login local rechaza cualquier credencial.
- * Nunca incluir passwords en el código fuente.
- */
-export function listLocalUsers(): LocalAuthUser[] {
-  const raw = process.env.SOLIVAN_LOCAL_USERS?.trim();
-  if (!raw) return [];
-
+function parseEnvUsers(raw: string): LocalAuthUser[] {
   let parsed: unknown;
   try {
     parsed = JSON.parse(raw);
@@ -77,6 +101,19 @@ export function listLocalUsers(): LocalAuthUser[] {
   });
 }
 
+/**
+ * Usuarios locales: `SOLIVAN_LOCAL_USERS` si está definido; si no, cuentas de muestra.
+ */
+export function listLocalUsers(): LocalAuthUser[] {
+  const raw = process.env.SOLIVAN_LOCAL_USERS?.trim();
+  if (!raw) return SAMPLE_LOCAL_USERS.map((u) => ({ ...u }));
+  return parseEnvUsers(raw);
+}
+
+export function usesSampleLocalUsers(): boolean {
+  return !process.env.SOLIVAN_LOCAL_USERS?.trim();
+}
+
 export function findLocalUser(email: string, password: string) {
   const normalized = email.trim().toLowerCase();
   return (
@@ -86,7 +123,6 @@ export function findLocalUser(email: string, password: string) {
   );
 }
 
-/** True si hay al menos un usuario local en el entorno (sin exponer datos). */
 export function isLocalAuthConfigured(): boolean {
   try {
     return listLocalUsers().length > 0;
@@ -95,11 +131,20 @@ export function isLocalAuthConfigured(): boolean {
   }
 }
 
-/** Listado público (sin passwords) solo con opt-in explícito fuera de producción. */
+/** Emails/roles para la UI de login (incluye passwords solo en cuentas de muestra). */
 export function listExposedLocalUsers(): Array<{
   email: string;
   role: AppRole;
+  password?: string;
 }> {
+  if (usesSampleLocalUsers()) {
+    return SAMPLE_LOCAL_USERS.map(({ email, role, password }) => ({
+      email,
+      role,
+      password,
+    }));
+  }
+
   const allow =
     process.env.SOLIVAN_EXPOSE_DEMO_USERS === "true" &&
     process.env.NODE_ENV !== "production";

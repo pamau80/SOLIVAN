@@ -4,6 +4,7 @@ import {
   isLocalAuthConfigured,
   listExposedLocalUsers,
   listLocalUsers,
+  usesSampleLocalUsers,
 } from "./local-users";
 
 const ORIGINAL = {
@@ -20,22 +21,16 @@ afterEach(() => {
 });
 
 describe("local-users", () => {
-  it("sin SOLIVAN_LOCAL_USERS no hay usuarios", () => {
+  it("sin SOLIVAN_LOCAL_USERS usa cuentas de muestra", () => {
     delete process.env.SOLIVAN_LOCAL_USERS;
-    expect(listLocalUsers()).toEqual([]);
-    expect(findLocalUser("a@b.cl", "x")).toBeNull();
-    expect(isLocalAuthConfigured()).toBe(false);
-  });
-
-  it("isLocalAuthConfigured es true con usuarios válidos", () => {
-    process.env.SOLIVAN_LOCAL_USERS = JSON.stringify([
-      {
-        email: "a@b.cl",
-        password: "secret-value",
-        role: "admin",
-      },
-    ]);
+    expect(usesSampleLocalUsers()).toBe(true);
+    expect(listLocalUsers().length).toBeGreaterThan(0);
     expect(isLocalAuthConfigured()).toBe(true);
+    expect(findLocalUser("admin@solivan.local", "solivan-admin")).not.toBeNull();
+    expect(findLocalUser("admin@solivan.local", "wrong")).toBeNull();
+    expect(listExposedLocalUsers().some((u) => u.password === "solivan-admin")).toBe(
+      true,
+    );
   });
 
   it("carga usuarios desde JSON de entorno", () => {
@@ -47,6 +42,7 @@ describe("local-users", () => {
         role: "planner",
       },
     ]);
+    expect(usesSampleLocalUsers()).toBe(false);
     const users = listLocalUsers();
     expect(users).toHaveLength(1);
     expect(users[0]?.email).toBe("planner@example.com");
@@ -57,7 +53,7 @@ describe("local-users", () => {
     expect(findLocalUser("planner@example.com", "wrong")).toBeNull();
   });
 
-  it("no expone listado en producción aunque el flag esté activo", () => {
+  it("no expone listado de env en producción aunque el flag esté activo", () => {
     process.env.SOLIVAN_LOCAL_USERS = JSON.stringify([
       {
         email: "a@b.cl",
