@@ -69,7 +69,11 @@ export async function POST(request: Request) {
     }
 
     const user = findLocalUser(body.email, body.password);
-    if (!user) throw new Error("Credenciales inválidas");
+    if (!user) {
+      throw new Error(
+        "Credenciales inválidas o autenticación local no configurada",
+      );
+    }
 
     const db = getDb();
     let profile = db.profiles.find((p) => p.id === user.id);

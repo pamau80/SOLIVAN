@@ -21,4 +21,4 @@ jobs:
       - run: npm test
       - run: npm run build
         env:
-          SOLIVAN_SESSION_SECRET: ci-test-secret-not-for-production
+          SOLIVAN_SESSION_SECRET: ci-build-session-secret-do-not-reuse-elsewhere
