@@ -1,5 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { findLocalUser, listExposedLocalUsers, listLocalUsers } from "./local-users";
+import {
+  findLocalUser,
+  isLocalAuthConfigured,
+  listExposedLocalUsers,
+  listLocalUsers,
+} from "./local-users";
 
 const ORIGINAL = {
   users: process.env.SOLIVAN_LOCAL_USERS,
@@ -19,6 +24,18 @@ describe("local-users", () => {
     delete process.env.SOLIVAN_LOCAL_USERS;
     expect(listLocalUsers()).toEqual([]);
     expect(findLocalUser("a@b.cl", "x")).toBeNull();
+    expect(isLocalAuthConfigured()).toBe(false);
+  });
+
+  it("isLocalAuthConfigured es true con usuarios válidos", () => {
+    process.env.SOLIVAN_LOCAL_USERS = JSON.stringify([
+      {
+        email: "a@b.cl",
+        password: "secret-value",
+        role: "admin",
+      },
+    ]);
+    expect(isLocalAuthConfigured()).toBe(true);
   });
 
   it("carga usuarios desde JSON de entorno", () => {

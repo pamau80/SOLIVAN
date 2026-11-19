@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { findLocalUser } from "@/lib/auth/local-users";
+import { findLocalUser, isLocalAuthConfigured } from "@/lib/auth/local-users";
 import { createSessionToken } from "@/lib/auth/session-token";
 import { SESSION_COOKIE, SESSION_TTL_SECONDS } from "@/lib/auth/types";
 import { fail, ok } from "@/lib/api";
@@ -68,11 +68,15 @@ export async function POST(request: Request) {
       return response;
     }
 
+    if (!isLocalAuthConfigured()) {
+      throw new Error(
+        "Autenticación local no configurada: define SOLIVAN_LOCAL_USERS y SOLIVAN_SESSION_SECRET en el entorno del servidor",
+      );
+    }
+
     const user = findLocalUser(body.email, body.password);
     if (!user) {
-      throw new Error(
-        "Credenciales inválidas o autenticación local no configurada",
-      );
+      throw new Error("Credenciales inválidas");
     }
 
     const db = getDb();

@@ -10,6 +10,7 @@ import { safeInternalPath } from "@/lib/safe-redirect";
 type MePayload = {
   authenticated: boolean;
   runtimeMode: "local" | "supabase";
+  localAuthConfigured?: boolean;
   demoUsers: Array<{ email: string; role: string }>;
 };
 
@@ -118,7 +119,18 @@ export function LoginForm() {
             </ul>
           </div>
         ) : null}
-        {me?.runtimeMode === "local" && (me.demoUsers?.length ?? 0) === 0 ? (
+        {me?.runtimeMode === "local" && me.localAuthConfigured === false ? (
+          <p className="mt-4 text-xs text-amber-700">
+            Autenticación local sin configurar: falta{" "}
+            <code className="rounded bg-amber-50 px-1">SOLIVAN_LOCAL_USERS</code>{" "}
+            (y{" "}
+            <code className="rounded bg-amber-50 px-1">SOLIVAN_SESSION_SECRET</code>
+            ) en los secretos del servidor.
+          </p>
+        ) : null}
+        {me?.runtimeMode === "local" &&
+        me.localAuthConfigured !== false &&
+        (me.demoUsers?.length ?? 0) === 0 ? (
           <p className="mt-4 text-xs text-slate-500">
             Modo local: usa las credenciales definidas en el entorno del servidor.
           </p>

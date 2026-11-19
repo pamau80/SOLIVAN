@@ -86,6 +86,15 @@ export function findLocalUser(email: string, password: string) {
   );
 }
 
+/** True si hay al menos un usuario local en el entorno (sin exponer datos). */
+export function isLocalAuthConfigured(): boolean {
+  try {
+    return listLocalUsers().length > 0;
+  } catch {
+    return false;
+  }
+}
+
 /** Listado público (sin passwords) solo con opt-in explícito fuera de producción. */
 export function listExposedLocalUsers(): Array<{
   email: string;
