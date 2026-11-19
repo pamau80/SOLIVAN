@@ -7,6 +7,8 @@ export default defineConfig({
     include: ["src/**/*.test.ts"],
     env: {
       SOLIVAN_DATA_FILE: "/tmp/solivan-data/solivan-test.json",
+      SOLIVAN_SESSION_SECRET:
+        "vitest-only-session-secret-not-for-runtime-use",
     },
   },
   resolve: {

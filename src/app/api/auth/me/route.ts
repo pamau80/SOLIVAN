@@ -1,28 +1,20 @@
 import { fail, ok } from "@/lib/api";
 import { readSession } from "@/lib/auth/server-session";
+import { listExposedLocalUsers } from "@/lib/auth/local-users";
 import { getAppEnv } from "@/lib/env";
-import { LOCAL_DEMO_USERS } from "@/lib/auth/local-users";
 
 export async function GET() {
   try {
     const session = await readSession();
     const env = getAppEnv();
-    const exposeDemoSecrets =
-      env.runtimeMode === "local" &&
-      process.env.SOLIVAN_EXPOSE_DEMO_USERS === "true";
 
     return ok({
       authenticated: Boolean(session),
       session,
       runtimeMode: env.runtimeMode,
+      // Nunca incluye passwords. Solo emails/roles con opt-in fuera de producción.
       demoUsers:
-        env.runtimeMode === "local"
-          ? LOCAL_DEMO_USERS.map((u) => ({
-              email: u.email,
-              role: u.role,
-              ...(exposeDemoSecrets ? { hintPassword: u.password } : {}),
-            }))
-          : [],
+        env.runtimeMode === "local" ? listExposedLocalUsers() : [],
     });
   } catch (error) {
     return fail(error, 500);

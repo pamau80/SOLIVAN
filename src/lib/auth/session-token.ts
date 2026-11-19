@@ -6,24 +6,17 @@ const WEAK_SECRETS = new Set([
   "cambia-este-secreto-largo",
   "solivan-local-dev-secret",
   "ci-test-secret-not-for-production",
+  "solivan-dev-only-secret-do-not-use-in-prod-32b",
+  "solivan-local-dev-secret-min-32-chars!!",
 ]);
 
 function getSecret(): string {
   const secret = process.env.SOLIVAN_SESSION_SECRET?.trim() ?? "";
-  const isProd = process.env.NODE_ENV === "production";
 
-  if (isProd) {
-    if (!secret || WEAK_SECRETS.has(secret) || secret.length < 32) {
-      throw new Error(
-        "SOLIVAN_SESSION_SECRET debe ser un secreto fuerte (≥32 chars) en producción",
-      );
-    }
-    return secret;
-  }
-
-  if (!secret || WEAK_SECRETS.has(secret)) {
-    // Demo/dev: secreto derivado estable, nunca el literal documentado.
-    return "solivan-dev-only-secret-do-not-use-in-prod-32b";
+  if (!secret || WEAK_SECRETS.has(secret) || secret.length < 32) {
+    throw new Error(
+      "SOLIVAN_SESSION_SECRET debe ser un secreto fuerte (≥32 chars); no uses valores de ejemplo",
+    );
   }
   return secret;
 }
@@ -70,9 +63,7 @@ async function verifySignature(body: string, signature: string): Promise<boolean
   try {
     const key = await importHmacKey();
     const raw = fromBase64Url(signature);
-    // Copia a ArrayBuffer propio para tipado BufferSource estricto de TS.
     const sigBytes = new Uint8Array(raw);
-    // crypto.subtle.verify es constant-time en runtimes modernos.
     return crypto.subtle.verify(
       "HMAC",
       key,

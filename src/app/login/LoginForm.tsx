@@ -10,14 +10,14 @@ import { safeInternalPath } from "@/lib/safe-redirect";
 type MePayload = {
   authenticated: boolean;
   runtimeMode: "local" | "supabase";
-  demoUsers: Array<{ email: string; role: string; hintPassword?: string }>;
+  demoUsers: Array<{ email: string; role: string }>;
 };
 
 export function LoginForm() {
   const search = useSearchParams();
   const nextPath = safeInternalPath(search.get("next"), "/dashboard");
-  const [email, setEmail] = useState("planificador@solivan.local");
-  const [password, setPassword] = useState("solivan-demo");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [me, setMe] = useState<MePayload | null>(null);
   const [loading, setLoading] = useState(false);
@@ -100,19 +100,16 @@ export function LoginForm() {
           </Button>
         </form>
 
-        {me?.runtimeMode === "local" ? (
+        {me?.runtimeMode === "local" && (me.demoUsers?.length ?? 0) > 0 ? (
           <div className="mt-5 rounded-md border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
-            <p className="font-medium text-slate-800">Usuarios demo (modo local)</p>
+            <p className="font-medium text-slate-800">Usuarios locales configurados</p>
             <ul className="mt-2 space-y-1">
-              {(me.demoUsers ?? []).map((user) => (
+              {me.demoUsers.map((user) => (
                 <li key={user.email}>
                   <button
                     type="button"
                     className="text-left hover:underline"
-                    onClick={() => {
-                      setEmail(user.email);
-                      if (user.hintPassword) setPassword(user.hintPassword);
-                    }}
+                    onClick={() => setEmail(user.email)}
                   >
                     {user.role}: {user.email}
                   </button>
@@ -120,6 +117,11 @@ export function LoginForm() {
               ))}
             </ul>
           </div>
+        ) : null}
+        {me?.runtimeMode === "local" && (me.demoUsers?.length ?? 0) === 0 ? (
+          <p className="mt-4 text-xs text-slate-500">
+            Modo local: usa las credenciales definidas en el entorno del servidor.
+          </p>
         ) : null}
         {me?.runtimeMode === "supabase" ? (
           <p className="mt-4 text-xs text-slate-500">

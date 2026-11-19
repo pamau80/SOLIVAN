@@ -29,11 +29,21 @@ function assert(cond, msg) {
   if (!cond) throw new Error(msg);
 }
 
+const smokeEmail =
+  process.env.SOLIVAN_SMOKE_EMAIL ??
+  process.env.SMOKE_EMAIL ??
+  "";
+const smokePassword =
+  process.env.SOLIVAN_SMOKE_PASSWORD ??
+  process.env.SMOKE_PASSWORD ??
+  "";
+assert(smokeEmail && smokePassword, "Define SOLIVAN_SMOKE_EMAIL y SOLIVAN_SMOKE_PASSWORD");
+
 const login = await req("/api/auth/login", {
   method: "POST",
   body: {
-    email: "planificador@solivan.local",
-    password: "solivan-demo",
+    email: smokeEmail,
+    password: smokePassword,
   },
 });
 assert(login.status === 200, `login ${login.status}`);

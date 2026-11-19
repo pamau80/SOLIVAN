@@ -16,25 +16,17 @@ Objetivo: reemplazar el proceso basado en Excel por un sistema centralizado, est
 
 ```bash
 npm install
-cp .env.example .env.local   # opcional: configurar Supabase
+cp .env.example .env.local
+# Define SOLIVAN_SESSION_SECRET (≥32 chars) y, en modo local, SOLIVAN_LOCAL_USERS (JSON)
 npm run dev
 ```
 
-Sin variables de Supabase, la aplicación arranca en **modo local** con datos demo persistidos en `.data/`.
+Sin variables de Supabase, la aplicación arranca en **modo local** con datos demo persistidos en `.data/`. El login local **exige** `SOLIVAN_LOCAL_USERS` en el entorno; no hay claves embebidas en el código.
 
 Abre `http://localhost:3000/login`.
 
-Usuarios demo (modo local):
-
-| Rol | Correo | Clave |
-|-----|--------|-------|
-| planner | `planificador@solivan.local` | `solivan-demo` |
-| admin | `admin@solivan.local` | `solivan-admin` |
-| operator | `operador@solivan.local` | `solivan-oper` |
-| viewer | `visor@solivan.local` | `solivan-view` |
-
 Permisos (API alineada a RLS): `viewer` solo lectura; `operator` ejecución/incidencias/personas; `planner` planifica/catálogos; `admin` además setRole/resetDemo.  
-Para rellenar claves en `/login` automáticamente: `SOLIVAN_EXPOSE_DEMO_USERS=true` (solo entornos de confianza).
+Opcional fuera de producción: `SOLIVAN_EXPOSE_DEMO_USERS=true` lista emails (nunca passwords) en `/login`.
 
 Producción Supabase: ver `docs/SUPABASE_SETUP.md` (seed demo opt-in, no en migraciones).
 
