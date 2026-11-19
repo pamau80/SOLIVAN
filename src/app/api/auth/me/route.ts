@@ -1,6 +1,10 @@
 import { fail, ok } from "@/lib/api";
 import { readSession } from "@/lib/auth/server-session";
-import { listExposedLocalUsers } from "@/lib/auth/local-users";
+import {
+  isLocalAuthConfigured,
+  listExposedLocalUsers,
+  usesSampleLocalUsers,
+} from "@/lib/auth/local-users";
 import { getAppEnv } from "@/lib/env";
 
 export async function GET() {
@@ -12,7 +16,10 @@ export async function GET() {
       authenticated: Boolean(session),
       session,
       runtimeMode: env.runtimeMode,
-      // Nunca incluye passwords. Solo emails/roles con opt-in fuera de producción.
+      localAuthConfigured:
+        env.runtimeMode === "local" ? isLocalAuthConfigured() : true,
+      usingSampleUsers:
+        env.runtimeMode === "local" ? usesSampleLocalUsers() : false,
       demoUsers:
         env.runtimeMode === "local" ? listExposedLocalUsers() : [],
     });

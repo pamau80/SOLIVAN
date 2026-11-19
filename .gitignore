@@ -45,3 +45,4 @@ next-env.d.ts
 .data/
 tmp-ui-auth.mjs
 AGENTS.md
+.env.local

@@ -10,14 +10,16 @@ import { safeInternalPath } from "@/lib/safe-redirect";
 type MePayload = {
   authenticated: boolean;
   runtimeMode: "local" | "supabase";
-  demoUsers: Array<{ email: string; role: string }>;
+  localAuthConfigured?: boolean;
+  usingSampleUsers?: boolean;
+  demoUsers: Array<{ email: string; role: string; password?: string }>;
 };
 
 export function LoginForm() {
   const search = useSearchParams();
   const nextPath = safeInternalPath(search.get("next"), "/dashboard");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("admin@solivan.local");
+  const [password, setPassword] = useState("solivan-admin");
   const [error, setError] = useState<string | null>(null);
   const [me, setMe] = useState<MePayload | null>(null);
   const [loading, setLoading] = useState(false);
@@ -44,13 +46,20 @@ export function LoginForm() {
         method: "POST",
         body: JSON.stringify({ email, password }),
       });
-      // Navegación completa para asegurar envío de cookie httpOnly al middleware.
       window.location.assign(nextPath);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error de autenticación");
     } finally {
       setLoading(false);
     }
+  }
+
+  function applyDemoUser(user: {
+    email: string;
+    password?: string;
+  }) {
+    setEmail(user.email);
+    if (user.password) setPassword(user.password);
   }
 
   return (
@@ -102,23 +111,30 @@ export function LoginForm() {
 
         {me?.runtimeMode === "local" && (me.demoUsers?.length ?? 0) > 0 ? (
           <div className="mt-5 rounded-md border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
-            <p className="font-medium text-slate-800">Usuarios locales configurados</p>
+            <p className="font-medium text-slate-800">
+              {me.usingSampleUsers
+                ? "Cuentas de muestra"
+                : "Usuarios locales configurados"}
+            </p>
             <ul className="mt-2 space-y-1">
               {me.demoUsers.map((user) => (
                 <li key={user.email}>
                   <button
                     type="button"
                     className="text-left hover:underline"
-                    onClick={() => setEmail(user.email)}
+                    onClick={() => applyDemoUser(user)}
                   >
                     {user.role}: {user.email}
+                    {user.password ? ` / ${user.password}` : ""}
                   </button>
                 </li>
               ))}
             </ul>
           </div>
         ) : null}
-        {me?.runtimeMode === "local" && (me.demoUsers?.length ?? 0) === 0 ? (
+        {me?.runtimeMode === "local" &&
+        !me.usingSampleUsers &&
+        (me.demoUsers?.length ?? 0) === 0 ? (
           <p className="mt-4 text-xs text-slate-500">
             Modo local: usa las credenciales definidas en el entorno del servidor.
           </p>
